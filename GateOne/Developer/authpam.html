@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>The SSH Plugin &mdash; Gate One 0.9 documentation</title>
+    <title>authpam.py - A PAM Authentication Module &mdash; Gate One 0.9 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -26,9 +26,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Gate One 0.9 documentation" href="../index.html" />
-    <link rel="up" title="Developer Documentation" href="index.html" />
-    <link rel="prev" title="The Playback Plugin" href="plugin_playback.html" /> 
+    <link rel="top" title="Gate One 0.9 documentation" href="../index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -40,11 +38,7 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="right" >
-          <a href="plugin_playback.html" title="The Playback Plugin"
-             accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Gate One Documentation</a> &raquo;</li>
-          <li><a href="index.html" accesskey="U">Developer Documentation</a> &raquo;</li> 
+        <li><a href="../index.html">Gate One Documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -53,8 +47,16 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="the-ssh-plugin">
-<h1>The SSH Plugin<a class="headerlink" href="#the-ssh-plugin" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-authpam">
+<span id="authpam-py-a-pam-authentication-module"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">authpam.py</span></tt> - A PAM Authentication Module<a class="headerlink" href="#module-authpam" title="Permalink to this headline">¶</a></h1>
+<p>This authentication module is built on top of python-pam (or PAM).  The latest
+version of which can be found here:  <a class="reference external" href="ftp://ftp.pangalactic.org/pub/tummy/">ftp://ftp.pangalactic.org/pub/tummy/</a> or if
+that doesn't work try:  <a class="reference external" href="http://packages.debian.org/lenny/python-pam">http://packages.debian.org/lenny/python-pam</a></p>
+<p>It was originally written by Alan Schmitz.</p>
+<p>The only non-obvious aspect of this module is that the pam_realm setting is only
+used when the user is asked to authenticate and when the user's information is
+store in the 'users' directory.  It isn't actually used in any part of the
+authentication (PAM doesn't take a &quot;realm&quot; setting).</p>
 </div>
 
 
@@ -63,12 +65,9 @@
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="plugin_playback.html"
-                        title="previous chapter">The Playback Plugin</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../_sources/Developer/plugin_ssh.txt"
+    <li><a href="../_sources/Developer/authpam.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
@@ -97,11 +96,7 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="right" >
-          <a href="plugin_playback.html" title="The Playback Plugin"
-             >previous</a> |</li>
-        <li><a href="../index.html">Gate One Documentation</a> &raquo;</li>
-          <li><a href="index.html" >Developer Documentation</a> &raquo;</li> 
+        <li><a href="../index.html">Gate One Documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

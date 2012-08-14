@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>About Gate One &mdash; Gate One 1.0rc1 documentation</title>
+    <title>About Gate One &mdash; Gate One 1.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.0rc1',
+        VERSION:     '1.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <link rel="shortcut icon" href="../_static/favicon.png"/>
-    <link rel="top" title="Gate One 1.0rc1 documentation" href="../index.html" />
+    <link rel="top" title="Gate One 1.1 documentation" href="../index.html" />
     <link rel="next" title="User Guide" href="../UserGuide/index.html" />
     <link rel="prev" title="Gate One Documentation" href="../index.html" /> 
   </head>
@@ -233,7 +233,8 @@ Options:
 &nbsp;&nbsp;--keyfile                        Path to the SSL keyfile.  Will be auto-generated if none is provided.
 &nbsp;&nbsp;--kill                           Kill any running Gate One terminal processes including dtach'd processes.
 &nbsp;&nbsp;--locale                         The locale (e.g. pt_PT) Gate One should use for translations.  If not provided, will default to $LANG (which is 'en_US' in your current shell), or en_US if not set.
-&nbsp;&nbsp;--new_api_key                    Generate a new API key that an external application can use toembed Gate One.
+&nbsp;&nbsp;--new_api_key                    Generate a new API key that an external application can use to embed Gate One.
+&nbsp;&nbsp;--origins                        A semicolon-separated list of origins you wish to allow access to your Gate One server over the WebSocket.  This value must contain the hostnames and FQDNs (e.g. foo;foo.bar;) users will use to connect to your Gate One server as well as the hostnames/FQDNs of any sites that will be embedding Gate One. Here's the default on your system: 'localhost;yourhostname'. Alternatively, '*' may be  specified to allow access from anywhere.
 &nbsp;&nbsp;--pam_realm                      Basic auth REALM to display when authenticating clients.  Default: hostname.  Only relevant if PAM authentication is enabled.
 &nbsp;&nbsp;--pam_service                    PAM service to use.  Defaults to 'login'. Only relevant if PAM authentication is enabled.
 &nbsp;&nbsp;--port                           Run on the given port.

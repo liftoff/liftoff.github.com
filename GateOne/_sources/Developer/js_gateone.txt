@@ -11,6 +11,7 @@ Gate One's JavaScript is made up of several modules (aka plugins), each pertaini
 * `GateOne.Input`_
 * `GateOne.Visual`_
 * `GateOne.Terminal`_
+* `GateOne.User`_
 
 The properties and functions of each respective module are outlined below.
 
@@ -488,7 +489,21 @@ Functions
 
 .. js:function:: GateOne.Utils.init
 
-    Like all plugin init() functions this gets called from :js:func:`GateOne.Utils.postOnLoad` which itself is called at the end of :js:func:`GateOne.initialize`.  It simply attaches the 'save_file' (WebSocket) action to :js:func:`GateOne.Utils.saveAsAction` (in :js:attr:`GateOne.Net.actions`).
+    Like all plugin init() functions this gets called from :js:func:`GateOne.Utils.postInit` which itself is called at the end of :js:func:`GateOne.initialize`.  It simply attaches the 'save_file' (WebSocket) action to :js:func:`GateOne.Utils.saveAsAction` (in :js:attr:`GateOne.Net.actions`).
+
+.. js:function:: GateOne.Utils.createBlob(array, mimetype)
+
+    Returns a Blob() object using the given *array* and *mimetype*.  If *mimetype* is omitted it will default to 'text/plain'.  Optionally, *array* may be given as a string in which case it will be automatically wrapped in an array.
+
+    :param array array: A string or array containing the data that the Blob will contain.
+    :param string mimetype: A string representing the mimetype of the data (e.g. 'application/javascript').
+    :returns: A Blob()
+
+    Examples:
+
+    .. code-block:: javascript
+
+        blob = GateOne.Utils.createBlob('some data here', 'text/plain);
 
 .. js:function:: GateOne.Utils.createElement(tagname, properties)
 
@@ -893,7 +908,7 @@ Functions
 
     .. note:: This function can also be useful to simply save yourself a lot of typing.  If you're planning on calling a function with the same parameters a number of times it is a good idea to use partial() to create a new function with all the parameters pre-applied.  Can make code easier to read too.
 
-.. js:function:: GateOne.Utils.postOnLoad
+.. js:function:: GateOne.Utils.postInit
 
     Called by :js:func:`GateOne.init()`, iterates over the list of plugins in :js:attr:`GateOne.loadedModules` calling the ``init()`` function of each (if present).  When that's done it does the same thing with each respective plugin's ``postInit()`` function.
 
@@ -907,6 +922,24 @@ Functions
 
         > GateOne.Utils.randomPrime();
         618690239
+
+.. js:function:: GateOne.Utils.randomString(length, chars)
+
+    :returns: A random string of the given *length* using the given *chars*.
+
+    If *chars* is omitted the returned string will consist of lower-case ASCII alphanumerics.
+
+    :param int length: The length of the random string to be returned.
+    :param string chars: Optional; a string containing the characters to use when generating the random string.
+
+    Example:
+
+    .. code-block:: javascript
+
+        > GateOne.Utils.randomString(8);
+        "oa2f9txf"
+        > GateOne.Utils.randomString(8, '123abc');
+        "1b3ac12b"
 
 .. js:function:: GateOne.Utils.removeElement(elem)
 
@@ -940,14 +973,6 @@ Functions
     Saves the given *blob* (which must be a proper `Blob <https://developer.mozilla.org/en/DOM/Blob>`_ object with data inside of it) as *filename* (as a file) in the browser.  Just as if you clicked on a link to download it.
 
     .. note:: This is amazingly handy for downloading files over the WebSocket.
-
-    For reference, this is how to construct a "proper" Blob (assming the file you're saving is just text):
-
-    .. code-block:: javascript
-
-        var bb = new BlobBuilder();
-        bb.append(<your data here>);
-        var blob = bb.getBlob("text/plain;charset=" + document.characterSet);
 
 .. js:function:: GateOne.Utils.saveAsAction(message)
 
@@ -1863,3 +1888,57 @@ Functions
     *ratelimiter* will be a boolean value representing whether or not the rate limiter has been engaged (if the program running on this terminal is updating the screen too fast).
 
     :param object termObj: An object that contains the terminal number ('term'), the 'scrollback' buffer, the terminal 'screen', and a boolean idicating whether or not the rate limiter has been engaged ('ratelimiter').
+
+GateOne.User
+------------
+.. js:attribute:: GateOne.User
+
+GateOne.User is for things like logging out, synchronizing preferences with the server (not implemented yet), and it is also meant to provide hooks for plugins to tie into so that actions can be taken when user-specific events occur.  It also provides the UI elements necessary for the user to change their bell sound.
+
+Properties
+^^^^^^^^^^
+.. js:attribute:: GateOne.User.userLoginCallbacks
+
+    If a plugin wants to perform an action immediately after the user is authenticated a callback may be appended to this array like so:
+
+    .. code-block:: javascript
+
+        GateOne.User.userLoginCallbacks.push(GateOne.MyPlugin.userAuthenticated);
+
+    This is very useful if you want to ensure that a function does not get executed until after :js:attr:`~GateOne.User.username` has been set.
+
+    All callbacks in :js:attr:`~GateOne.User.userLoginCallbacks` will be called with the authenticated user's username as the only argument like so:
+
+    .. code-block:: javascript
+
+        myCallback(username);
+
+.. js:attribute:: GateOne.User.username
+
+    Stores the authenticated user's username.  If Gate One is configured with anonymous authenticationn ( `auth = none` in server.conf) the username will be set to 'ANONYMOUS'.
+
+Functions
+^^^^^^^^^
+.. js:function:: GateOne.User.init
+
+    Like all plugin init() functions this gets called from :js:func:`GateOne.Utils.postInit` which itself is called at the end of :js:func:`GateOne.initialize`.  It adds the username to the preferences panel as well as a link that allows the user to logout.  It also attaches the 'set_username' and 'load_bell' actions to :js:attr:`GateOne.Net.actions`.
+
+.. js:function:: GateOne.User.setUsername
+
+    This is what gets attached to the 'set_username' WebSocket action in :js:attr:`GateOne.Net.actions` and gets called immediately after the user is successfully authenticated.
+
+.. js:function:: GateOne.User.logout(redirectURL)
+
+    This function will log the user out by deleting all Gate One cookies and forcing them to re-authenticate.  By default this is what is attached to the 'logout' link in the preferences panel.
+
+    *redirectURL* if provided, will be used to automatically redirect the user to the given URL after they are logged out (as opposed to just reloading the main Gate One page).
+
+.. js:function:: GateOne.User.loadBell
+
+    This is what gets attached to the 'load_bell' WebSocket action in :js:attr:`GateOne.Net.actions` and gets called by the server whenever it is asked to perform the 'get_bell' action.  The server-side 'get_bell' action is normally called by :js:func:`GateOne.Net.onOpen` if a bell sound doesn't already exist in :js:attr:`GateOne.Prefs.bellSound`.  This will download the default bell sound from the server and store it in :js:attr:`GateOne.Prefs.bellSound`.
+
+.. js:function:: GateOne.User.uploadBellDialog
+
+    Displays a dialog/form where the user can set a replacement bell sound or reset it to the default (which is whatever is at '<gateone>/static/bell.ogg' on the server).
+
+    .. note:: When the user sets a custom bell sound it doesn't involve the server at all (no network traffic).  It is set locally using the HTML5 File API; the FileReader() function, specifically.

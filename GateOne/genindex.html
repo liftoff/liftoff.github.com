@@ -84,6 +84,26 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
+  <dt><a href="About/index.html#index-0">$GO_SESSION</a>
+  </dt>
+
+      
+  <dt><a href="About/index.html#index-1">$GO_SESSION_DIR</a>
+  </dt>
+
+      
+  <dt><a href="About/index.html#index-2">$GO_TERM</a>
+  </dt>
+
+      
+  <dt><a href="About/index.html#index-3">$GO_USER</a>
+  </dt>
+
+      
+  <dt><a href="About/index.html#index-4">$GO_USER_DIR</a>
+  </dt>
+
+      
   <dt>
     --address=string (IPv4 or IPv6 address)
   </dt>
@@ -96,12 +116,34 @@
       </dl></dd>
       
   <dt>
-    --auth=string (none|google|kerberos)
+    --api_timestamp_window=string (special: [0-9]+[smhd])
+  </dt>
+
+      <dd><dl>
+        
+  <dt><a href="About/index.html#cmdoption--api_timestamp_window">command line option</a>
+  </dt>
+
+      </dl></dd>
+      
+  <dt>
+    --auth=string (none|pam|google|kerberos|api)
   </dt>
 
       <dd><dl>
         
   <dt><a href="About/index.html#cmdoption--auth">command line option</a>
+  </dt>
+
+      </dl></dd>
+      
+  <dt>
+    --ca_certs=string (file path)
+  </dt>
+
+      <dd><dl>
+        
+  <dt><a href="About/index.html#cmdoption--ca_certs">command line option</a>
   </dt>
 
       </dl></dd>
@@ -162,7 +204,7 @@
       </dl></dd>
       
   <dt>
-    --debug
+    --debug=boolean
   </dt>
 
       <dd><dl>
@@ -173,7 +215,7 @@
       </dl></dd>
       
   <dt>
-    --disable_ssl
+    --disable_ssl=boolean
   </dt>
 
       <dd><dl>
@@ -184,7 +226,7 @@
       </dl></dd>
       
   <dt>
-    --dtach
+    --dtach=boolean
   </dt>
 
       <dd><dl>
@@ -195,12 +237,34 @@
       </dl></dd>
       
   <dt>
-    --embedded
+    --embedded=boolean
   </dt>
 
       <dd><dl>
         
   <dt><a href="About/index.html#cmdoption--embedded">command line option</a>
+  </dt>
+
+      </dl></dd>
+      
+  <dt>
+    --enable_unix_socket=boolean
+  </dt>
+
+      <dd><dl>
+        
+  <dt><a href="About/index.html#cmdoption--enable_unix_socket">command line option</a>
+  </dt>
+
+      </dl></dd>
+      
+  <dt>
+    --gid=string
+  </dt>
+
+      <dd><dl>
+        
+  <dt><a href="About/index.html#cmdoption--gid">command line option</a>
   </dt>
 
       </dl></dd>
@@ -248,6 +312,8 @@
   </dt>
 
       </dl></dd>
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt>
     --locale=string (locale string)
@@ -281,8 +347,6 @@
   </dt>
 
       </dl></dd>
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt>
     --log_file_prefix=string (file path)
@@ -296,7 +360,7 @@
       </dl></dd>
       
   <dt>
-    --log_to_stderr
+    --log_to_stderr=boolean
   </dt>
 
       <dd><dl>
@@ -307,7 +371,7 @@
       </dl></dd>
       
   <dt>
-    --logging
+    --logging=string (info|warning|error|none)
   </dt>
 
       <dd><dl>
@@ -324,6 +388,17 @@
       <dd><dl>
         
   <dt><a href="About/index.html#cmdoption--new_api_key">command line option</a>
+  </dt>
+
+      </dl></dd>
+      
+  <dt>
+    --origins=string (semicolon-separated origins)
+  </dt>
+
+      <dd><dl>
+        
+  <dt><a href="About/index.html#cmdoption--origins">command line option</a>
   </dt>
 
       </dl></dd>
@@ -346,6 +421,17 @@
       <dd><dl>
         
   <dt><a href="About/index.html#cmdoption--pam_service">command line option</a>
+  </dt>
+
+      </dl></dd>
+      
+  <dt>
+    --pid_file=string
+  </dt>
+
+      <dd><dl>
+        
+  <dt><a href="About/index.html#cmdoption--pid_file">command line option</a>
   </dt>
 
       </dl></dd>
@@ -390,6 +476,17 @@
       <dd><dl>
         
   <dt><a href="About/index.html#cmdoption--session_timeout">command line option</a>
+  </dt>
+
+      </dl></dd>
+      
+  <dt>
+    --ssl_auth=string (None|optional|required)
+  </dt>
+
+      <dd><dl>
+        
+  <dt><a href="About/index.html#cmdoption--ssl_auth">command line option</a>
   </dt>
 
       </dl></dd>
@@ -803,7 +900,15 @@
   </dt>
 
         
-  <dt><a href="About/index.html#cmdoption--auth">--auth=string (none|google|kerberos)</a>
+  <dt><a href="About/index.html#cmdoption--api_timestamp_window">--api_timestamp_window=string (special: [0-9]+[smhd])</a>
+  </dt>
+
+        
+  <dt><a href="About/index.html#cmdoption--auth">--auth=string (none|pam|google|kerberos|api)</a>
+  </dt>
+
+        
+  <dt><a href="About/index.html#cmdoption--ca_certs">--ca_certs=string (file path)</a>
   </dt>
 
         
@@ -827,19 +932,27 @@
   </dt>
 
         
-  <dt><a href="About/index.html#cmdoption--debug">--debug</a>
+  <dt><a href="About/index.html#cmdoption--debug">--debug=boolean</a>
   </dt>
 
         
-  <dt><a href="About/index.html#cmdoption--disable_ssl">--disable_ssl</a>
+  <dt><a href="About/index.html#cmdoption--disable_ssl">--disable_ssl=boolean</a>
   </dt>
 
         
-  <dt><a href="About/index.html#cmdoption--dtach">--dtach</a>
+  <dt><a href="About/index.html#cmdoption--dtach">--dtach=boolean</a>
   </dt>
 
         
-  <dt><a href="About/index.html#cmdoption--embedded">--embedded</a>
+  <dt><a href="About/index.html#cmdoption--embedded">--embedded=boolean</a>
+  </dt>
+
+        
+  <dt><a href="About/index.html#cmdoption--enable_unix_socket">--enable_unix_socket=boolean</a>
+  </dt>
+
+        
+  <dt><a href="About/index.html#cmdoption--gid">--gid=string</a>
   </dt>
 
         
@@ -875,15 +988,19 @@
   </dt>
 
         
-  <dt><a href="About/index.html#cmdoption--log_to_stderr">--log_to_stderr</a>
+  <dt><a href="About/index.html#cmdoption--log_to_stderr">--log_to_stderr=boolean</a>
   </dt>
 
         
-  <dt><a href="About/index.html#cmdoption--logging">--logging</a>
+  <dt><a href="About/index.html#cmdoption--logging">--logging=string (info|warning|error|none)</a>
   </dt>
 
         
   <dt><a href="About/index.html#cmdoption--new_api_key">--new_api_key</a>
+  </dt>
+
+        
+  <dt><a href="About/index.html#cmdoption--origins">--origins=string (semicolon-separated origins)</a>
   </dt>
 
         
@@ -892,6 +1009,10 @@
 
         
   <dt><a href="About/index.html#cmdoption--pam_service">--pam_service=string</a>
+  </dt>
+
+        
+  <dt><a href="About/index.html#cmdoption--pid_file">--pid_file=string</a>
   </dt>
 
         
@@ -908,6 +1029,10 @@
 
         
   <dt><a href="About/index.html#cmdoption--session_timeout">--session_timeout=string (special: [0-9]+[smhd])</a>
+  </dt>
+
+        
+  <dt><a href="About/index.html#cmdoption--ssl_auth">--ssl_auth=string (None|optional|required)</a>
   </dt>
 
         
@@ -1068,15 +1193,42 @@
   </dt>
 
       
-  <dt><a href="Developer/gateone.html#gateone.ErrorHandler">ErrorHandler (class in gateone)</a>
+  <dt>
+    environment variable
   </dt>
 
+      <dd><dl>
+        
+  <dt><a href="About/index.html#index-0">$GO_SESSION</a>
+  </dt>
+
+        
+  <dt><a href="About/index.html#index-1">$GO_SESSION_DIR</a>
+  </dt>
+
+        
+  <dt><a href="About/index.html#index-2">$GO_TERM</a>
+  </dt>
+
+        
+  <dt><a href="About/index.html#index-3">$GO_USER</a>
+  </dt>
+
+        
+  <dt><a href="About/index.html#index-4">$GO_USER_DIR</a>
+  </dt>
+
+      </dl></dd>
       
-  <dt><a href="Developer/gateone.html#gateone.TerminalWebSocket.esc_opt_handler">esc_opt_handler() (gateone.TerminalWebSocket method)</a>
+  <dt><a href="Developer/gateone.html#gateone.ErrorHandler">ErrorHandler (class in gateone)</a>
   </dt>
 
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="Developer/gateone.html#gateone.TerminalWebSocket.esc_opt_handler">esc_opt_handler() (gateone.TerminalWebSocket method)</a>
+  </dt>
+
       
   <dt><a href="Developer/logviewer.html#logviewer.escape_escape_seq">escape_escape_seq() (in module logviewer)</a>
   </dt>
@@ -1144,6 +1296,10 @@
   </dt>
 
       
+  <dt><a href="Developer/js_gateone.html#GateOne.initialized">GateOne.initialized (GateOne attribute)</a>
+  </dt>
+
+      
   <dt><a href="Developer/js_gateone.html#GateOne.Input">GateOne.Input (GateOne attribute)</a>
   </dt>
 
@@ -1169,6 +1325,10 @@
 
       
   <dt><a href="Developer/js_gateone.html#GateOne.Input.emulateKeyCombo">GateOne.Input.emulateKeyCombo() (GateOne.Input method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.Input.emulateKeyFallback">GateOne.Input.emulateKeyFallback() (GateOne.Input method)</a>
   </dt>
 
       
@@ -1276,7 +1436,15 @@
   </dt>
 
       
+  <dt><a href="Developer/js_gateone.html#GateOne.Net.sendString">GateOne.Net.sendString() (GateOne.Net method)</a>
+  </dt>
+
+      
   <dt><a href="Developer/js_gateone.html#GateOne.Net.setTerminal">GateOne.Net.setTerminal() (GateOne.Net method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.Net.sslError">GateOne.Net.sslError() (GateOne.Net method)</a>
   </dt>
 
       
@@ -1285,6 +1453,10 @@
 
       
   <dt><a href="Developer/js_gateone.html#GateOne.prefs">GateOne.prefs (GateOne attribute)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.prefs.audibleBell">GateOne.prefs.audibleBell (GateOne.prefs attribute)</a>
   </dt>
 
       
@@ -1297,6 +1469,14 @@
 
       
   <dt><a href="Developer/js_gateone.html#GateOne.prefs.bellSound">GateOne.prefs.bellSound (GateOne.prefs attribute)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.prefs.bellSoundType">GateOne.prefs.bellSoundType (GateOne.prefs attribute)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.prefs.colAdjust">GateOne.prefs.colAdjust (GateOne.prefs attribute)</a>
   </dt>
 
       
@@ -1332,6 +1512,10 @@
   </dt>
 
       
+  <dt><a href="Developer/js_gateone.html#GateOne.prefs.rowAdjust">GateOne.prefs.rowAdjust (GateOne.prefs attribute)</a>
+  </dt>
+
+      
   <dt><a href="Developer/js_gateone.html#GateOne.prefs.rows">GateOne.prefs.rows (GateOne.prefs attribute)</a>
   </dt>
 
@@ -1360,7 +1544,19 @@
   </dt>
 
       
+  <dt><a href="Developer/js_gateone.html#GateOne.prefs.webWorker">GateOne.prefs.webWorker (GateOne.prefs attribute)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.savePrefsCallbacks">GateOne.savePrefsCallbacks (GateOne attribute)</a>
+  </dt>
+
+      
   <dt><a href="Developer/js_gateone.html#GateOne.Terminal">GateOne.Terminal (GateOne attribute)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.Terminal.applyScreen">GateOne.Terminal.applyScreen() (GateOne.Terminal method)</a>
   </dt>
 
       
@@ -1373,6 +1569,10 @@
 
       
   <dt><a href="Developer/js_gateone.html#GateOne.Terminal.init">GateOne.Terminal.init() (GateOne.Terminal method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.Terminal.loadWebWorkerAction">GateOne.Terminal.loadWebWorkerAction() (GateOne.Terminal method)</a>
   </dt>
 
       
@@ -1396,6 +1596,10 @@
   </dt>
 
       
+  <dt><a href="Developer/js_gateone.html#GateOne.Terminal.paste">GateOne.Terminal.paste() (GateOne.Terminal method)</a>
+  </dt>
+
+      
   <dt><a href="Developer/js_gateone.html#GateOne.Terminal.reattachTerminalsAction">GateOne.Terminal.reattachTerminalsAction() (GateOne.Terminal method)</a>
   </dt>
 
@@ -1404,7 +1608,27 @@
   </dt>
 
       
+  <dt><a href="Developer/js_gateone.html#GateOne.Terminal.registerTextTransform">GateOne.Terminal.registerTextTransform() (GateOne.Terminal method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.Terminal.resetTerminalAction">GateOne.Terminal.resetTerminalAction() (GateOne.Terminal method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.Terminal.scrollbackWidth">GateOne.Terminal.scrollbackWidth (GateOne.Terminal attribute)</a>
+  </dt>
+
+      
   <dt><a href="Developer/js_gateone.html#GateOne.Terminal.setModeAction">GateOne.Terminal.setModeAction() (GateOne.Terminal method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.Terminal.switchTerminal">GateOne.Terminal.switchTerminal() (GateOne.Terminal method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.Terminal.termUpdateFromWorker">GateOne.Terminal.termUpdateFromWorker() (GateOne.Terminal method)</a>
   </dt>
 
       
@@ -1412,7 +1636,19 @@
   </dt>
 
       
+  <dt><a href="Developer/js_gateone.html#GateOne.Terminal.timeoutAction">GateOne.Terminal.timeoutAction() (GateOne.Terminal method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.Terminal.updateTermCallbacks">GateOne.Terminal.updateTermCallbacks (GateOne.Terminal attribute)</a>
+  </dt>
+
+      
   <dt><a href="Developer/js_gateone.html#GateOne.Terminal.updateTerminalAction">GateOne.Terminal.updateTerminalAction() (GateOne.Terminal method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.Terminal.writeScrollback">GateOne.Terminal.writeScrollback() (GateOne.Terminal method)</a>
   </dt>
 
       
@@ -1420,47 +1656,73 @@
   </dt>
 
       
-  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].backspace <character>">GateOne.terminals[num].backspace &lt;character&gt; (GateOne.terminals[num] attribute)</a>
+  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].backspace">GateOne.terminals[num].backspace (GateOne.terminals[num] attribute)</a>
   </dt>
 
       
-  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].columns <number>">GateOne.terminals[num].columns &lt;number&gt; (GateOne.terminals[num] attribute)</a>
+  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].columns">GateOne.terminals[num].columns (GateOne.terminals[num] attribute)</a>
   </dt>
 
       
-  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].created <Date()>">GateOne.terminals[num].created &lt;Date()&gt; (GateOne.terminals[num] attribute)</a>
+  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].created">GateOne.terminals[num].created (GateOne.terminals[num] attribute)</a>
   </dt>
 
       
-  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].mode <string>">GateOne.terminals[num].mode &lt;string&gt; (GateOne.terminals[num] attribute)</a>
+  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].mode">GateOne.terminals[num].mode (GateOne.terminals[num] attribute)</a>
   </dt>
 
       
-  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].playbackFrames <Array()>">GateOne.terminals[num].playbackFrames &lt;Array()&gt; (GateOne.terminals[num] attribute)</a>
+  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].node">GateOne.terminals[num].node (GateOne.terminals[num] attribute)</a>
   </dt>
 
       
-  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].prevScreen <Array()>">GateOne.terminals[num].prevScreen &lt;Array()&gt; (GateOne.terminals[num] attribute)</a>
+  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].pasteNode">GateOne.terminals[num].pasteNode (GateOne.terminals[num] attribute)</a>
   </dt>
 
       
-  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].rows <number>">GateOne.terminals[num].rows &lt;number&gt; (GateOne.terminals[num] attribute)</a>
+  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].playbackFrames">GateOne.terminals[num].playbackFrames (GateOne.terminals[num] attribute)</a>
   </dt>
 
       
-  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].screen <Array()>">GateOne.terminals[num].screen &lt;Array()&gt; (GateOne.terminals[num] attribute)</a>
+  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].prevScreen">GateOne.terminals[num].prevScreen (GateOne.terminals[num] attribute)</a>
   </dt>
 
       
-  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].scrollback <Array()>">GateOne.terminals[num].scrollback &lt;Array()&gt; (GateOne.terminals[num] attribute)</a>
+  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].rows">GateOne.terminals[num].rows (GateOne.terminals[num] attribute)</a>
   </dt>
 
       
-  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].scrollbackVisible <boolean>">GateOne.terminals[num].scrollbackVisible &lt;boolean&gt; (GateOne.terminals[num] attribute)</a>
+  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].screen">GateOne.terminals[num].screen (GateOne.terminals[num] attribute)</a>
   </dt>
 
       
-  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].sshConnectString <string>">GateOne.terminals[num].sshConnectString &lt;string&gt; (GateOne.terminals[num] attribute)</a>
+  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].screenNode">GateOne.terminals[num].screenNode (GateOne.terminals[num] attribute)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].scrollback">GateOne.terminals[num].scrollback (GateOne.terminals[num] attribute)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].scrollbackNode">GateOne.terminals[num].scrollbackNode (GateOne.terminals[num] attribute)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].scrollbackVisible">GateOne.terminals[num].scrollbackVisible (GateOne.terminals[num] attribute)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].scrollbackWriteTimer">GateOne.terminals[num].scrollbackWriteTimer (GateOne.terminals[num] attribute)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].sshConnectString">GateOne.terminals[num].sshConnectString (GateOne.terminals[num] attribute)</a>
+  </dt>
+
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.terminals[num].X11Title">GateOne.terminals[num].X11Title (GateOne.terminals[num] attribute)</a>
   </dt>
 
       
@@ -1475,14 +1737,16 @@
   <dt><a href="Developer/js_gateone.html#GateOne.User.loadBell">GateOne.User.loadBell() (GateOne.User method)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="Developer/js_gateone.html#GateOne.User.logout">GateOne.User.logout() (GateOne.User method)</a>
   </dt>
 
       
   <dt><a href="Developer/js_gateone.html#GateOne.User.setUsername">GateOne.User.setUsername() (GateOne.User method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.User.storeSession">GateOne.User.storeSession() (GateOne.User method)</a>
   </dt>
 
       
@@ -1515,6 +1779,10 @@
 
       
   <dt><a href="Developer/js_gateone.html#GateOne.Utils.endsWith">GateOne.Utils.endsWith() (GateOne.Utils method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.Utils.enumerateThemes">GateOne.Utils.enumerateThemes() (GateOne.Utils method)</a>
   </dt>
 
       
@@ -1554,6 +1822,10 @@
   </dt>
 
       
+  <dt><a href="Developer/js_gateone.html#GateOne.Utils.hideElements">GateOne.Utils.hideElements() (GateOne.Utils method)</a>
+  </dt>
+
+      
   <dt><a href="Developer/js_gateone.html#GateOne.Utils.init">GateOne.Utils.init() (GateOne.Utils method)</a>
   </dt>
 
@@ -1578,7 +1850,15 @@
   </dt>
 
       
+  <dt><a href="Developer/js_gateone.html#GateOne.Utils.isPageHidden">GateOne.Utils.isPageHidden() (GateOne.Utils method)</a>
+  </dt>
+
+      
   <dt><a href="Developer/js_gateone.html#GateOne.Utils.isPrime">GateOne.Utils.isPrime() (GateOne.Utils method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.Utils.isVisible">GateOne.Utils.isVisible() (GateOne.Utils method)</a>
   </dt>
 
       
@@ -1602,7 +1882,15 @@
   </dt>
 
       
+  <dt><a href="Developer/js_gateone.html#GateOne.Utils.loadStyle">GateOne.Utils.loadStyle() (GateOne.Utils method)</a>
+  </dt>
+
+      
   <dt><a href="Developer/js_gateone.html#GateOne.Utils.loadThemeCSS">GateOne.Utils.loadThemeCSS() (GateOne.Utils method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.Utils.ltrim">GateOne.Utils.ltrim() (GateOne.Utils method)</a>
   </dt>
 
       
@@ -1634,6 +1922,14 @@
   </dt>
 
       
+  <dt><a href="Developer/js_gateone.html#GateOne.Utils.rtrim">GateOne.Utils.rtrim() (GateOne.Utils method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.Utils.runPostInit">GateOne.Utils.runPostInit() (GateOne.Utils method)</a>
+  </dt>
+
+      
   <dt><a href="Developer/js_gateone.html#GateOne.Utils.saveAs">GateOne.Utils.saveAs() (GateOne.Utils method)</a>
   </dt>
 
@@ -1662,7 +1958,15 @@
   </dt>
 
       
+  <dt><a href="Developer/js_gateone.html#GateOne.Utils.showElements">GateOne.Utils.showElements() (GateOne.Utils method)</a>
+  </dt>
+
+      
   <dt><a href="Developer/js_gateone.html#GateOne.Utils.startsWith">GateOne.Utils.startsWith() (GateOne.Utils method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.Utils.stripHTML">GateOne.Utils.stripHTML() (GateOne.Utils method)</a>
   </dt>
 
       
@@ -1682,6 +1986,10 @@
   </dt>
 
       
+  <dt><a href="Developer/js_gateone.html#GateOne.Visual.alert">GateOne.Visual.alert() (GateOne.Visual method)</a>
+  </dt>
+
+      
   <dt><a href="Developer/js_gateone.html#GateOne.Visual.applyStyle">GateOne.Visual.applyStyle() (GateOne.Visual method)</a>
   </dt>
 
@@ -1695,6 +2003,14 @@
 
       
   <dt><a href="Developer/js_gateone.html#GateOne.Visual.createGrid">GateOne.Visual.createGrid() (GateOne.Visual method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.Visual.CSSPluginAction">GateOne.Visual.CSSPluginAction() (GateOne.Visual method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.Visual.dialog">GateOne.Visual.dialog() (GateOne.Visual method)</a>
   </dt>
 
       
@@ -1714,6 +2030,10 @@
   </dt>
 
       
+  <dt><a href="Developer/js_gateone.html#GateOne.Visual.getTransform">GateOne.Visual.getTransform() (GateOne.Visual method)</a>
+  </dt>
+
+      
   <dt><a href="Developer/js_gateone.html#GateOne.Visual.goDimensions">GateOne.Visual.goDimensions (GateOne.Visual attribute)</a>
   </dt>
 
@@ -1723,6 +2043,10 @@
 
       
   <dt><a href="Developer/js_gateone.html#GateOne.Visual.playBell">GateOne.Visual.playBell() (GateOne.Visual method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.Visual.serverMessageAction">GateOne.Visual.serverMessageAction() (GateOne.Visual method)</a>
   </dt>
 
       
@@ -1754,6 +2078,10 @@
   </dt>
 
       
+  <dt><a href="Developer/js_gateone.html#GateOne.Visual.toggleOverlay">GateOne.Visual.toggleOverlay() (GateOne.Visual method)</a>
+  </dt>
+
+      
   <dt><a href="Developer/js_gateone.html#GateOne.Visual.togglePanel">GateOne.Visual.togglePanel() (GateOne.Visual method)</a>
   </dt>
 
@@ -1763,6 +2091,10 @@
 
       
   <dt><a href="Developer/js_gateone.html#GateOne.Visual.updateDimensions">GateOne.Visual.updateDimensions() (GateOne.Visual method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#GateOne.Visual.widget">GateOne.Visual.widget() (GateOne.Visual method)</a>
   </dt>
 
       
@@ -2042,6 +2374,10 @@
   </dt>
 
       
+  <dt><a href="Developer/gateone.html#gateone.TerminalWebSocket.manual_title">manual_title() (gateone.TerminalWebSocket method)</a>
+  </dt>
+
+      
   <dt><a href="Developer/utils.html#utils.merge_handlers">merge_handlers() (in module utils)</a>
   </dt>
 
@@ -2049,12 +2385,12 @@
   <dt><a href="Developer/utils.html#utils.MimeTypeFail">MimeTypeFail</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="Developer/utils.html#utils.mkdir_p">mkdir_p() (in module utils)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="Developer/gateone.html#gateone.TerminalWebSocket.mode_handler">mode_handler() (gateone.TerminalWebSocket method)</a>
   </dt>
@@ -2117,10 +2453,38 @@
   <dt><a href="Developer/gateone.html#gateone.TerminalWebSocket.on_message">on_message() (gateone.TerminalWebSocket method)</a>
   </dt>
 
+      
+  <dt><a href="Developer/gateone.html#gateone.TerminalWebSocket.open">open() (gateone.TerminalWebSocket method)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#options.onclose">options.onclose (options attribute)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#options.onconfig">options.onconfig (options attribute)</a>
+  </dt>
+
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="Developer/gateone.html#gateone.TerminalWebSocket.open">open() (gateone.TerminalWebSocket method)</a>
+  <dt><a href="Developer/js_gateone.html#options.onopen">options.onopen (options attribute)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#options.ratelimiter">options.ratelimiter (options attribute)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#options.screen">options.screen (options attribute)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#options.scrollback">options.scrollback (options attribute)</a>
+  </dt>
+
+      
+  <dt><a href="Developer/js_gateone.html#options.term">options.term (options attribute)</a>, <a href="Developer/js_gateone.html#options.term">[1]</a>
   </dt>
 
   </dl></td>
@@ -2588,9 +2952,32 @@
         <li><a href="index.html">Gate One Documentation</a> &raquo;</li> 
       </ul>
     </div>
+
     <div class="footer">
         &copy; Copyright 2011, Liftoff Software Corporation.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
     </div>
+<script type="text/javascript">
+window.onload = function(e) {
+    // Make our collapseindex elements actually collapsible
+    $('<span class="collapsindextitle">Index</span> <a class="showhide">[show]</a>').insertBefore('.collapseindex');
+    $('.showhide').each(function(index, value){
+        var showHide = $(this);
+        showHide.click(function() {
+            if (this.innerHTML == "[hide]") {
+                this.innerHTML = "[show]";
+            } else {
+                this.innerHTML = "[hide]";
+            }
+            $(this).next('.collapseindex').toggle(1); // This should always be the next .collapseindex element
+        });
+    });
+    $('.collapseindex').each(function(index, value){
+        // Start them out hidden
+        $(this).hide();
+    });
+}
+</script>
+
   </body>
 </html>

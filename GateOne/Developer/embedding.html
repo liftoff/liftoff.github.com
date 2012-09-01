@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Embedding Gate One Into Other Applications, Part 1 &mdash; Gate One 1.1 documentation</title>
+    <title>Embedding Gate One Into Other Applications &mdash; Gate One 1.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -54,8 +54,12 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="embedding-gate-one-into-other-applications-part-1">
-<span id="gateone-embedding"></span><h1>Embedding Gate One Into Other Applications, Part 1<a class="headerlink" href="#embedding-gate-one-into-other-applications-part-1" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="embedding-gate-one-into-other-applications">
+<span id="gateone-embedding"></span><h1>Embedding Gate One Into Other Applications<a class="headerlink" href="#embedding-gate-one-into-other-applications" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">A <em>much better</em> interactive tutorial is available in Gate One's 'tests' directory: &lt;gateone dir&gt;/tests/hello_embedded/.  The future of the documentation you're reading is uncertain.</p>
+</div>
 <p>This tutorial will walk you through embedding Gate One into a completely different web application.  It is divided into two parts:</p>
 <blockquote>
 <div><ol class="arabic simple">
@@ -125,7 +129,7 @@
             </a></p>
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Embedding Gate One Into Other Applications, Part 1</a><ul>
+<li><a class="reference internal" href="#">Embedding Gate One Into Other Applications</a><ul>
 <li><a class="reference internal" href="#placement">Placement</a></li>
 <li><a class="reference internal" href="#include-gateone-js">Include gateone.js</a></li>
 <li><a class="reference internal" href="#call-gateone-init">Call GateOne.init()</a></li>
@@ -138,7 +142,7 @@
                         title="previous chapter">The SSH Plugin</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../_sources/Developer/embedding_part1.txt"
+    <li><a href="../_sources/Developer/embedding.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
@@ -174,9 +178,32 @@
           <li><a href="index.html" >Developer Documentation</a> &raquo;</li> 
       </ul>
     </div>
+
     <div class="footer">
         &copy; Copyright 2011, Liftoff Software Corporation.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
     </div>
+<script type="text/javascript">
+window.onload = function(e) {
+    // Make our collapseindex elements actually collapsible
+    $('<span class="collapsindextitle">Index</span> <a class="showhide">[show]</a>').insertBefore('.collapseindex');
+    $('.showhide').each(function(index, value){
+        var showHide = $(this);
+        showHide.click(function() {
+            if (this.innerHTML == "[hide]") {
+                this.innerHTML = "[show]";
+            } else {
+                this.innerHTML = "[hide]";
+            }
+            $(this).next('.collapseindex').toggle(1); // This should always be the next .collapseindex element
+        });
+    });
+    $('.collapseindex').each(function(index, value){
+        // Start them out hidden
+        $(this).hide();
+    });
+}
+</script>
+
   </body>
 </html>

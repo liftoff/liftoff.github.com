@@ -114,7 +114,7 @@ code 401) which should prompt the browser to reply with credentials.</p>
             </a></p>
   <h4>Previous topic</h4>
   <p class="topless"><a href="auth.html"
-                        title="previous chapter"><tt class="docutils literal"><span class="pre">auth.py</span></tt> - Authentication Classes</a></p>
+                        title="previous chapter"><tt class="docutils literal docutils literal"><span class="pre">auth.py</span></tt> - Authentication Classes</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="gateone.html"
                         title="next chapter"><tt class="docutils literal"><span class="pre">gateone.py</span></tt> - Gate One's Main Script</a></p>
@@ -159,9 +159,32 @@ code 401) which should prompt the browser to reply with credentials.</p>
           <li><a href="index.html" >Developer Documentation</a> &raquo;</li> 
       </ul>
     </div>
+
     <div class="footer">
         &copy; Copyright 2011, Liftoff Software Corporation.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
     </div>
+<script type="text/javascript">
+window.onload = function(e) {
+    // Make our collapseindex elements actually collapsible
+    $('<span class="collapsindextitle">Index</span> <a class="showhide">[show]</a>').insertBefore('.collapseindex');
+    $('.showhide').each(function(index, value){
+        var showHide = $(this);
+        showHide.click(function() {
+            if (this.innerHTML == "[hide]") {
+                this.innerHTML = "[show]";
+            } else {
+                this.innerHTML = "[hide]";
+            }
+            $(this).next('.collapseindex').toggle(1); // This should always be the next .collapseindex element
+        });
+    });
+    $('.collapseindex').each(function(index, value){
+        // Start them out hidden
+        $(this).hide();
+    });
+}
+</script>
+
   </body>
 </html>

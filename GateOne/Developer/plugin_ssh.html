@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>The SSH Plugin &mdash; Gate One 1.1 documentation</title>
+    <title>The SSH Plugin &mdash; Gate One 1.1.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.1',
+        VERSION:     '1.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <link rel="shortcut icon" href="../_static/favicon.png"/>
-    <link rel="top" title="Gate One 1.1 documentation" href="../index.html" />
+    <link rel="top" title="Gate One 1.1.0 documentation" href="../index.html" />
     <link rel="up" title="Developer Documentation" href="index.html" />
     <link rel="next" title="The Example Plugin" href="plugin_example.html" />
     <link rel="prev" title="The Playback Plugin" href="plugin_playback.html" /> 
@@ -386,7 +386,7 @@ SSH connections by writing them to <tt class="xref py py-obj docutils literal"><
 use it to tell ssh.js what the SSH connection string is so it can use that
 information to duplicate sessions (if the user so desires).  For reference,
 the specific string which will call this function from a terminal app is:</p>
-<div class="highlight-python"><pre>]_;ssh|&lt;whatever&gt;</pre>
+<div class="highlight-python"><pre>\x1b]_;ssh|&lt;whatever&gt;</pre>
 </div>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
@@ -396,7 +396,7 @@ the specific string which will call this function from a terminal app is:</p>
 
 <dl class="function">
 <dt id="ssh.create_user_ssh_dir">
-<tt class="descclassname">ssh.</tt><tt class="descname">create_user_ssh_dir</tt><big>(</big><em>current_user</em>, <em>settings</em><big>)</big><a class="reference internal" href="../_modules/ssh.html#create_user_ssh_dir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ssh.create_user_ssh_dir" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">ssh.</tt><tt class="descname">create_user_ssh_dir</tt><big>(</big><em>tws</em>, <em>current_user</em>, <em>settings</em><big>)</big><a class="reference internal" href="../_modules/ssh.html#create_user_ssh_dir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ssh.create_user_ssh_dir" title="Permalink to this definition">¶</a></dt>
 <dd><p>To be called by the 'Auth' hook that gets called after the user is done
 authenticating, ensures that the <tt class="xref py py-obj docutils literal"><span class="pre">&lt;user's</span> <span class="pre">dir&gt;/ssh</span></tt> directory exists.</p>
 </dd></dl>

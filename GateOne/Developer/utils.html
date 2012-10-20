@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>utils.py - Supporting Functions &mdash; Gate One 1.1 documentation</title>
+    <title>utils.py - Supporting Functions &mdash; Gate One 1.1.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.1',
+        VERSION:     '1.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <link rel="shortcut icon" href="../_static/favicon.png"/>
-    <link rel="top" title="Gate One 1.1 documentation" href="../index.html" />
+    <link rel="top" title="Gate One 1.1.0 documentation" href="../index.html" />
     <link rel="up" title="Developer Documentation" href="index.html" />
     <link rel="next" title="gateone.js" href="js_gateone.html" />
     <link rel="prev" title="termio.py - Terminal Input/Output Module" href="termio.html" /> 
@@ -151,7 +151,7 @@ this:</p>
 
 <dl class="function">
 <dt id="utils.gen_self_signed_ssl">
-<tt class="descclassname">utils.</tt><tt class="descname">gen_self_signed_ssl</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/utils.html#gen_self_signed_ssl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utils.gen_self_signed_ssl" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">utils.</tt><tt class="descname">gen_self_signed_ssl</tt><big>(</big><em>path=None</em><big>)</big><a class="reference internal" href="../_modules/utils.html#gen_self_signed_ssl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utils.gen_self_signed_ssl" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generates a self-signed SSL certificate using pyOpenSSL or the openssl
 command depending on what's available,  The resulting key/certificate will
 use the RSA algorithm at 4096 bits.</p>
@@ -159,20 +159,22 @@ use the RSA algorithm at 4096 bits.</p>
 
 <dl class="function">
 <dt id="utils.gen_self_signed_openssl">
-<tt class="descclassname">utils.</tt><tt class="descname">gen_self_signed_openssl</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/utils.html#gen_self_signed_openssl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utils.gen_self_signed_openssl" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">utils.</tt><tt class="descname">gen_self_signed_openssl</tt><big>(</big><em>path=None</em><big>)</big><a class="reference internal" href="../_modules/utils.html#gen_self_signed_openssl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utils.gen_self_signed_openssl" title="Permalink to this definition">¶</a></dt>
 <dd><p>This method will generate a secure self-signed SSL key/certificate pair
 (using the <a class="reference external" href="http://www.openssl.org/docs/apps/openssl.html">openssl</a>
-command) saving the result as 'certificate.pem' and 'keyfile.pem' in the
-current working directory.  The certificate will be valid for 10 years.</p>
+command) saving the result as 'certificate.pem' and 'keyfile.pem' to <em>path</em>.
+If <em>path</em> is not given the result will be saved in the current working
+directory.  The certificate will be valid for 10 years.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="utils.gen_self_signed_pyopenssl">
-<tt class="descclassname">utils.</tt><tt class="descname">gen_self_signed_pyopenssl</tt><big>(</big><em>notAfter=None</em><big>)</big><a class="reference internal" href="../_modules/utils.html#gen_self_signed_pyopenssl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utils.gen_self_signed_pyopenssl" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">utils.</tt><tt class="descname">gen_self_signed_pyopenssl</tt><big>(</big><em>notAfter=None</em>, <em>path=None</em><big>)</big><a class="reference internal" href="../_modules/utils.html#gen_self_signed_pyopenssl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utils.gen_self_signed_pyopenssl" title="Permalink to this definition">¶</a></dt>
 <dd><p>This method will generate a secure self-signed SSL key/certificate pair
 (using pyOpenSSL) saving the result as 'certificate.pem' and 'keyfile.pem'
-in the current working directory.  By default the certificate will be valid
-for 10 years but this can be overridden by passing a valid timestamp via the
+in <em>path</em>.  If <em>path</em> is not given the result will be saved in the current
+working directory.  By default the certificate will be valid for 10 years
+but this can be overridden by passing a valid timestamp via the
 <em>notAfter</em> argument.</p>
 <p>Examples:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">gen_self_signed_ssl</span><span class="p">(</span><span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">365</span><span class="p">)</span> <span class="c"># 1-year certificate</span>
@@ -677,7 +679,7 @@ sessions.</p>
             </a></p>
   <h4>Previous topic</h4>
   <p class="topless"><a href="termio.html"
-                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">termio.py</span></tt> - Terminal Input/Output Module</a></p>
+                        title="previous chapter"><tt class="docutils literal docutils literal"><span class="pre">termio.py</span></tt> - Terminal Input/Output Module</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="js_gateone.html"
                         title="next chapter">gateone.js</a></p>

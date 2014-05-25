@@ -1,0 +1,668 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>pyminifier.minification &mdash; pyminifier 2.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="pyminifier 2.0 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="../../index.html" class="fa fa-home"> pyminifier</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../pyminifier.html"><tt class="docutils literal"><span class="pre">pyminifier.py</span></tt> - The main module for minifying, obfuscating, and compressing Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../analyze.html"><tt class="docutils literal"><span class="pre">analyze.py</span></tt> - For analyzing Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../compression.html"><tt class="docutils literal"><span class="pre">compression.py</span></tt> - For compressing Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../minification.html"><tt class="docutils literal"><span class="pre">minification.py</span></tt> - For minifying Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../obfuscate.html"><tt class="docutils literal"><span class="pre">obfuscate.py</span></tt> - For obfuscating Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../token_utils.html"><tt class="docutils literal"><span class="pre">token_utils.py</span></tt> - A collection of token-related functions</a></li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">pyminifier</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>pyminifier.minification</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <h1>Source code for pyminifier.minification</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+
+<span class="n">__doc__</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s">Module for minification functions.</span>
+<span class="s">&quot;&quot;&quot;</span>
+
+<span class="c"># Import built-in modules</span>
+<span class="kn">import</span> <span class="nn">re</span><span class="o">,</span> <span class="nn">tokenize</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">cStringIO</span> <span class="kn">as</span> <span class="nn">io</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span> <span class="c"># We&#39;re using Python 3</span>
+    <span class="kn">import</span> <span class="nn">io</span>
+
+<span class="c"># Import our own modules</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">analyze</span><span class="p">,</span> <span class="n">token_utils</span>
+
+<span class="c"># Compile our regular expressions for speed</span>
+<span class="n">multiline_quoted_string</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;(</span><span class="se">\&#39;\&#39;\&#39;</span><span class="s">|\&quot;\&quot;\&quot;)&#39;</span><span class="p">)</span>
+<span class="n">not_quoted_string</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;(\&quot;.*</span><span class="se">\&#39;\&#39;\&#39;</span><span class="s">.*\&quot;|</span><span class="se">\&#39;</span><span class="s">.*\&quot;\&quot;\&quot;.*</span><span class="se">\&#39;</span><span class="s">)&#39;</span><span class="p">)</span>
+<span class="n">trailing_newlines</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;\n\n&#39;</span><span class="p">)</span>
+<span class="n">multiline_indicator</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\\\\</span><span class="s">(\s*#.*)?</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+<span class="n">left_of_equals</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&#39;^.*?=&#39;</span><span class="p">)</span>
+<span class="c"># The above also removes trailing comments: &quot;test = &#39;blah \ # comment here&quot;</span>
+
+<span class="c"># These aren&#39;t used but they&#39;re a pretty good reference:</span>
+<span class="n">double_quoted_string</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;((?&lt;!</span><span class="se">\\</span><span class="s">)&quot;.*?(?&lt;!</span><span class="se">\\</span><span class="s">)&quot;)&#39;</span><span class="p">)</span>
+<span class="n">single_quoted_string</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&quot;((?&lt;!</span><span class="se">\\</span><span class="s">)&#39;.*?(?&lt;!</span><span class="se">\\</span><span class="s">)&#39;)&quot;</span><span class="p">)</span>
+<span class="n">single_line_single_quoted_string</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&quot;((?&lt;!</span><span class="se">\\</span><span class="s">)&#39;&#39;&#39;.*?(?&lt;!</span><span class="se">\\</span><span class="s">)&#39;&#39;&#39;)&quot;</span><span class="p">)</span>
+<span class="n">single_line_double_quoted_string</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&quot;((?&lt;!</span><span class="se">\\</span><span class="s">)&#39;&#39;&#39;.*?(?&lt;!</span><span class="se">\\</span><span class="s">)&#39;&#39;&#39;)&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="remove_comments"><a class="viewcode-back" href="../../minification.html#pyminifier.minification.remove_comments">[docs]</a><span class="k">def</span> <span class="nf">remove_comments</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Removes comments from *tokens* which is expected to be a list equivalent of</span>
+<span class="sd">    tokenize.generate_tokens() (so we can update in-place).</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        * If the comment makes up the whole line, the newline will also be removed (so you don&#39;t end up with lots of blank lines).</span>
+<span class="sd">        * Preserves shebangs and encoding strings.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">preserved_shebang</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+    <span class="n">preserved_encoding</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+    <span class="c"># This (short) loop preserves shebangs and encoding strings:</span>
+    <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">]:</span> <span class="c"># Will always be in the first four tokens</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+        <span class="c"># Save the first comment line if it starts with a shebang</span>
+        <span class="c"># (e.g. &#39;#!/usr/bin/env python&#39;)</span>
+        <span class="k">if</span> <span class="n">analyze</span><span class="o">.</span><span class="n">shebang</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span> <span class="c"># Must be first line</span>
+            <span class="n">preserved_shebang</span> <span class="o">=</span> <span class="n">line</span>
+        <span class="c"># Save the encoding string (must be first or second line in file)</span>
+        <span class="c"># (e.g. &#39;# -*- coding: utf-8 -*-&#39;)</span>
+        <span class="k">elif</span> <span class="n">analyze</span><span class="o">.</span><span class="n">encoding</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+            <span class="n">preserved_encoding</span> <span class="o">=</span> <span class="n">line</span>
+    <span class="c"># Now remove comments:</span>
+    <span class="n">prev_tok_type</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">tok</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+        <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">COMMENT</span><span class="p">:</span>
+            <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;</span> <span class="c"># Making it an empty string removes it</span>
+        <span class="c"># TODO: Figure out a way to make this work</span>
+        <span class="c">#elif prev_tok_type == tokenize.COMMENT:</span>
+            <span class="c">#if token_type == tokenize.NL:</span>
+                <span class="c">#tokens[index][1] = &#39;&#39; # Remove trailing newline</span>
+        <span class="n">prev_tok_type</span> <span class="o">=</span> <span class="n">token_type</span>
+    <span class="c"># Prepend our preserved items back into the token list:</span>
+    <span class="k">if</span> <span class="n">preserved_shebang</span><span class="p">:</span> <span class="c"># Have to re-tokenize them</span>
+        <span class="n">io_obj</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">(</span><span class="n">preserved_shebang</span> <span class="o">+</span> <span class="n">preserved_encoding</span><span class="p">)</span>
+        <span class="n">preserved</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">generate_tokens</span><span class="p">(</span><span class="n">io_obj</span><span class="o">.</span><span class="n">readline</span><span class="p">)]</span>
+        <span class="n">preserved</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span> <span class="c"># Get rid of ENDMARKER</span>
+        <span class="n">preserved</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span> <span class="c"># Round and round we go!</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">preserved</span><span class="p">:</span>
+            <span class="n">tokens</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="remove_docstrings"><a class="viewcode-back" href="../../minification.html#pyminifier.minification.remove_docstrings">[docs]</a><span class="k">def</span> <span class="nf">remove_docstrings</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Removes docstrings from *tokens* which is expected to be a list equivalent</span>
+<span class="sd">    of `tokenize.generate_tokens()` (so we can update in-place).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">prev_tok_type</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">tok</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+        <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">STRING</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">prev_tok_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">INDENT</span><span class="p">:</span>
+                <span class="c"># Definitely a docstring</span>
+                <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;</span> <span class="c"># Remove it</span>
+                <span class="c"># Remove the leftover indentation and newline:</span>
+                <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+                <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">-</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+            <span class="k">elif</span> <span class="n">prev_tok_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NL</span><span class="p">:</span>
+                <span class="c"># This captures whole-module docstrings:</span>
+                <span class="k">if</span> <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NEWLINE</span><span class="p">:</span>
+                    <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+                    <span class="c"># Remove the trailing newline:</span>
+                    <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+        <span class="n">prev_tok_type</span> <span class="o">=</span> <span class="n">token_type</span>
+</div>
+<div class="viewcode-block" id="remove_comments_and_docstrings"><a class="viewcode-back" href="../../minification.html#pyminifier.minification.remove_comments_and_docstrings">[docs]</a><span class="k">def</span> <span class="nf">remove_comments_and_docstrings</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns *source* minus comments and docstrings.</span>
+
+<span class="sd">    .. note:: Uses Python&#39;s built-in tokenize module to great effect.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        def noop(): # This is a comment</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+<span class="sd">            Does nothing.</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+<span class="sd">            pass # Don&#39;t do anything</span>
+
+<span class="sd">    Will become::</span>
+
+<span class="sd">        def noop():</span>
+<span class="sd">            pass</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">io_obj</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+    <span class="n">prev_toktype</span> <span class="o">=</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">INDENT</span>
+    <span class="n">last_lineno</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">last_col</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">generate_tokens</span><span class="p">(</span><span class="n">io_obj</span><span class="o">.</span><span class="n">readline</span><span class="p">):</span>
+        <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">start_line</span><span class="p">,</span> <span class="n">start_col</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">end_line</span><span class="p">,</span> <span class="n">end_col</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+        <span class="n">ltext</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">start_line</span> <span class="o">&gt;</span> <span class="n">last_lineno</span><span class="p">:</span>
+            <span class="n">last_col</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">start_col</span> <span class="o">&gt;</span> <span class="n">last_col</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">+=</span> <span class="p">(</span><span class="s">&quot; &quot;</span> <span class="o">*</span> <span class="p">(</span><span class="n">start_col</span> <span class="o">-</span> <span class="n">last_col</span><span class="p">))</span>
+        <span class="c"># Remove comments:</span>
+        <span class="k">if</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">COMMENT</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="c"># This series of conditionals removes docstrings:</span>
+        <span class="k">elif</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">STRING</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">prev_toktype</span> <span class="o">!=</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">INDENT</span><span class="p">:</span>
+        <span class="c"># This is likely a docstring; double-check we&#39;re not inside an operator:</span>
+                <span class="k">if</span> <span class="n">prev_toktype</span> <span class="o">!=</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NEWLINE</span><span class="p">:</span>
+                    <span class="c"># Note regarding NEWLINE vs NL: The tokenize module</span>
+                    <span class="c"># differentiates between newlines that start a new statement</span>
+                    <span class="c"># and newlines inside of operators such as parens, brackes,</span>
+                    <span class="c"># and curly braces.  Newlines inside of operators are</span>
+                    <span class="c"># NEWLINE and newlines that start new code are NL.</span>
+                    <span class="c"># Catch whole-module docstrings:</span>
+                    <span class="k">if</span> <span class="n">start_col</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="c"># Unlabelled indentation means we&#39;re inside an operator</span>
+                        <span class="n">out</span> <span class="o">+=</span> <span class="n">token_string</span>
+                    <span class="c"># Note regarding the INDENT token: The tokenize module does</span>
+                    <span class="c"># not label indentation inside of an operator (parens,</span>
+                    <span class="c"># brackets, and curly braces) as actual indentation.</span>
+                    <span class="c"># For example:</span>
+                    <span class="c"># def foo():</span>
+                    <span class="c">#     &quot;The spaces before this docstring are tokenize.INDENT&quot;</span>
+                    <span class="c">#     test = [</span>
+                    <span class="c">#         &quot;The spaces before this string do not get a token&quot;</span>
+                    <span class="c">#     ]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">+=</span> <span class="n">token_string</span>
+        <span class="n">prev_toktype</span> <span class="o">=</span> <span class="n">token_type</span>
+        <span class="n">last_col</span> <span class="o">=</span> <span class="n">end_col</span>
+        <span class="n">last_lineno</span> <span class="o">=</span> <span class="n">end_line</span>
+    <span class="k">return</span> <span class="n">out</span>
+</div>
+<div class="viewcode-block" id="reduce_operators"><a class="viewcode-back" href="../../minification.html#pyminifier.minification.reduce_operators">[docs]</a><span class="k">def</span> <span class="nf">reduce_operators</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Remove spaces between operators in *source* and returns the result.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        def foo(foo, bar, blah):</span>
+<span class="sd">            test = &quot;This is a %s&quot; % foo</span>
+
+<span class="sd">    Will become::</span>
+
+<span class="sd">        def foo(foo,bar,blah):</span>
+<span class="sd">            test=&quot;This is a %s&quot;%foo</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">io_obj</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+    <span class="n">remove_columns</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+    <span class="n">out_line</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+    <span class="n">prev_toktype</span> <span class="o">=</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">INDENT</span>
+    <span class="n">prev_tok</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">last_lineno</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">last_col</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">lshift</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">generate_tokens</span><span class="p">(</span><span class="n">io_obj</span><span class="o">.</span><span class="n">readline</span><span class="p">):</span>
+        <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">start_line</span><span class="p">,</span> <span class="n">start_col</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">end_line</span><span class="p">,</span> <span class="n">end_col</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+        <span class="n">ltext</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">start_line</span> <span class="o">&gt;</span> <span class="n">last_lineno</span><span class="p">:</span>
+            <span class="n">last_col</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">start_col</span> <span class="o">&gt;</span> <span class="n">last_col</span><span class="p">:</span>
+            <span class="n">out_line</span> <span class="o">+=</span> <span class="p">(</span><span class="s">&quot; &quot;</span> <span class="o">*</span> <span class="p">(</span><span class="n">start_col</span> <span class="o">-</span> <span class="n">last_col</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">OP</span><span class="p">:</span>
+            <span class="c"># Operators that begin a line such as @ or open parens should be</span>
+            <span class="c"># left alone:</span>
+            <span class="n">start_of_line_types</span> <span class="o">=</span> <span class="p">[</span> <span class="c"># These indicate we&#39;re starting a new line</span>
+                <span class="n">tokenize</span><span class="o">.</span><span class="n">NEWLINE</span><span class="p">,</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">DEDENT</span><span class="p">,</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">INDENT</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">prev_toktype</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">start_of_line_types</span><span class="p">:</span>
+                <span class="c"># This is just a regular operator; remove spaces</span>
+                <span class="n">remove_columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">start_col</span><span class="p">)</span> <span class="c"># Before OP</span>
+                <span class="n">remove_columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">end_col</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="c"># After OP</span>
+        <span class="k">if</span> <span class="n">token_string</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">):</span>
+            <span class="n">out_line</span> <span class="o">+=</span> <span class="n">token_string</span>
+            <span class="k">if</span> <span class="n">remove_columns</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">remove_columns</span><span class="p">:</span>
+                    <span class="n">col</span> <span class="o">=</span> <span class="n">col</span> <span class="o">-</span> <span class="n">lshift</span>
+                    <span class="k">try</span><span class="p">:</span>
+            <span class="c"># This was really handy for debugging (looks nice, worth saving):</span>
+                        <span class="c">#print(out_line + (&quot; &quot; * col) + &quot;^&quot;)</span>
+                        <span class="c"># The above points to the character we&#39;re looking at</span>
+                        <span class="k">if</span> <span class="n">out_line</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot; &quot;</span><span class="p">:</span> <span class="c"># Only if it is a space</span>
+                            <span class="n">out_line</span> <span class="o">=</span> <span class="n">out_line</span><span class="p">[:</span><span class="n">col</span><span class="p">]</span> <span class="o">+</span> <span class="n">out_line</span><span class="p">[</span><span class="n">col</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span>
+                            <span class="n">lshift</span> <span class="o">+=</span> <span class="mi">1</span> <span class="c"># Re-align future changes on this line</span>
+                    <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span> <span class="c"># Reached and end of line, no biggie</span>
+                        <span class="k">pass</span>
+            <span class="n">out</span> <span class="o">+=</span> <span class="n">out_line</span>
+            <span class="n">remove_columns</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">out_line</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+            <span class="n">lshift</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out_line</span> <span class="o">+=</span> <span class="n">token_string</span>
+        <span class="n">prev_toktype</span> <span class="o">=</span> <span class="n">token_type</span>
+        <span class="n">prev_token</span> <span class="o">=</span> <span class="n">tok</span>
+        <span class="n">last_col</span> <span class="o">=</span> <span class="n">end_col</span>
+        <span class="n">last_lineno</span> <span class="o">=</span> <span class="n">end_line</span>
+    <span class="c"># This makes sure to capture the last line if it doesn&#39;t end in a newline:</span>
+    <span class="n">out</span> <span class="o">+=</span> <span class="n">out_line</span>
+    <span class="c"># The tokenize module doesn&#39;t recognize @ sign before a decorator</span>
+    <span class="k">return</span> <span class="n">out</span>
+</div>
+<div class="viewcode-block" id="join_multiline_pairs"><a class="viewcode-back" href="../../minification.html#pyminifier.minification.join_multiline_pairs">[docs]</a><span class="k">def</span> <span class="nf">join_multiline_pairs</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">pair</span><span class="o">=</span><span class="s">&quot;()&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Finds and removes newlines in multiline matching pairs of characters in</span>
+<span class="sd">    *text*.</span>
+
+<span class="sd">    By default it joins parens () but it will join any two characters given via</span>
+<span class="sd">    the *pair* variable.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        Doesn&#39;t remove extraneous whitespace that ends up between the pair.</span>
+<span class="sd">        Use `reduce_operators()` for that.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        test = (</span>
+<span class="sd">            &quot;This is inside a multi-line pair of parentheses&quot;</span>
+<span class="sd">        )</span>
+
+<span class="sd">    Will become::</span>
+
+<span class="sd">        test = (            &quot;This is inside a multi-line pair of parentheses&quot;        )</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># Readability variables</span>
+    <span class="n">opener</span> <span class="o">=</span> <span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">closer</span> <span class="o">=</span> <span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c"># Tracking variables</span>
+    <span class="n">inside_pair</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">inside_quotes</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">inside_double_quotes</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">inside_single_quotes</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">quoted_string</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">openers</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">closers</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">linecount</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c"># Regular expressions</span>
+    <span class="n">opener_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&#39;\</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">opener</span><span class="p">)</span>
+    <span class="n">closer_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&#39;\</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">closer</span><span class="p">)</span>
+
+    <span class="n">output</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">):</span>
+        <span class="n">escaped</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="c"># First we rule out multi-line strings</span>
+        <span class="n">multline_match</span> <span class="o">=</span> <span class="n">multiline_quoted_string</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="n">not_quoted_string_match</span> <span class="o">=</span> <span class="n">not_quoted_string</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">multline_match</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">not_quoted_string_match</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">quoted_string</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;&quot;&quot;&quot;&#39;</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;&#39;&#39;&#39;&quot;</span><span class="p">)):</span>
+                <span class="c"># This is a single line that uses the triple quotes twice</span>
+                <span class="c"># Treat it as if it were just a regular line:</span>
+                <span class="n">output</span> <span class="o">+=</span> <span class="n">line</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+                <span class="n">quoted_string</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">output</span> <span class="o">+=</span> <span class="n">line</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+                <span class="n">quoted_string</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">elif</span> <span class="n">quoted_string</span> <span class="ow">and</span> <span class="n">multiline_quoted_string</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+            <span class="n">output</span> <span class="o">+=</span> <span class="n">line</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+            <span class="n">quoted_string</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="c"># Now let&#39;s focus on the lines containing our opener and/or closer:</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">quoted_string</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">opener_regex</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="ow">or</span> <span class="n">closer_regex</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="ow">or</span> <span class="n">inside_pair</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">character</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">character</span> <span class="o">==</span> <span class="n">opener</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">escaped</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">inside_quotes</span><span class="p">:</span>
+                            <span class="n">openers</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="n">inside_pair</span> <span class="o">=</span> <span class="bp">True</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="n">character</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">escaped</span> <span class="o">=</span> <span class="bp">False</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="n">character</span>
+                    <span class="k">elif</span> <span class="n">character</span> <span class="o">==</span> <span class="n">closer</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">escaped</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">inside_quotes</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">openers</span> <span class="ow">and</span> <span class="n">openers</span> <span class="o">==</span> <span class="p">(</span><span class="n">closers</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                                <span class="n">closers</span> <span class="o">=</span> <span class="mi">0</span>
+                                <span class="n">openers</span> <span class="o">=</span> <span class="mi">0</span>
+                                <span class="n">inside_pair</span> <span class="o">=</span> <span class="bp">False</span>
+                                <span class="n">output</span> <span class="o">+=</span> <span class="n">character</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="n">closers</span> <span class="o">+=</span> <span class="mi">1</span>
+                                <span class="n">output</span> <span class="o">+=</span> <span class="n">character</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">escaped</span> <span class="o">=</span> <span class="bp">False</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="n">character</span>
+                    <span class="k">elif</span> <span class="n">character</span> <span class="o">==</span> <span class="s">&#39;</span><span class="se">\\</span><span class="s">&#39;</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">escaped</span><span class="p">:</span>
+                            <span class="n">escaped</span> <span class="o">=</span> <span class="bp">False</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="n">character</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">escaped</span> <span class="o">=</span> <span class="bp">True</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="n">character</span>
+                    <span class="k">elif</span> <span class="n">character</span> <span class="o">==</span> <span class="s">&#39;&quot;&#39;</span> <span class="ow">and</span> <span class="n">escaped</span><span class="p">:</span>
+                        <span class="n">output</span> <span class="o">+=</span> <span class="n">character</span>
+                        <span class="n">escaped</span> <span class="o">=</span> <span class="bp">False</span>
+                    <span class="k">elif</span> <span class="n">character</span> <span class="o">==</span> <span class="s">&quot;&#39;&quot;</span> <span class="ow">and</span> <span class="n">escaped</span><span class="p">:</span>
+                        <span class="n">output</span> <span class="o">+=</span> <span class="n">character</span>
+                        <span class="n">escaped</span> <span class="o">=</span> <span class="bp">False</span>
+                    <span class="k">elif</span> <span class="n">character</span> <span class="o">==</span> <span class="s">&#39;&quot;&#39;</span> <span class="ow">and</span> <span class="n">inside_quotes</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">inside_single_quotes</span><span class="p">:</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="n">character</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">inside_quotes</span> <span class="o">=</span> <span class="bp">False</span>
+                            <span class="n">inside_double_quotes</span> <span class="o">=</span> <span class="bp">False</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="n">character</span>
+                    <span class="k">elif</span> <span class="n">character</span> <span class="o">==</span> <span class="s">&quot;&#39;&quot;</span> <span class="ow">and</span> <span class="n">inside_quotes</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">inside_double_quotes</span><span class="p">:</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="n">character</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">inside_quotes</span> <span class="o">=</span> <span class="bp">False</span>
+                            <span class="n">inside_single_quotes</span> <span class="o">=</span> <span class="bp">False</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="n">character</span>
+                    <span class="k">elif</span> <span class="n">character</span> <span class="o">==</span> <span class="s">&#39;&quot;&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">inside_quotes</span><span class="p">:</span>
+                        <span class="n">inside_quotes</span> <span class="o">=</span> <span class="bp">True</span>
+                        <span class="n">inside_double_quotes</span> <span class="o">=</span> <span class="bp">True</span>
+                        <span class="n">output</span> <span class="o">+=</span> <span class="n">character</span>
+                    <span class="k">elif</span> <span class="n">character</span> <span class="o">==</span> <span class="s">&quot;&#39;&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">inside_quotes</span><span class="p">:</span>
+                        <span class="n">inside_quotes</span> <span class="o">=</span> <span class="bp">True</span>
+                        <span class="n">inside_single_quotes</span> <span class="o">=</span> <span class="bp">True</span>
+                        <span class="n">output</span> <span class="o">+=</span> <span class="n">character</span>
+                    <span class="k">elif</span> <span class="n">character</span> <span class="o">==</span> <span class="s">&#39; &#39;</span> <span class="ow">and</span> <span class="n">inside_pair</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">inside_quotes</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">output</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="n">opener</span><span class="p">]:</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="s">&#39; &#39;</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">escaped</span><span class="p">:</span>
+                            <span class="n">escaped</span> <span class="o">=</span> <span class="bp">False</span>
+                        <span class="n">output</span> <span class="o">+=</span> <span class="n">character</span>
+                <span class="k">if</span> <span class="n">inside_pair</span> <span class="o">==</span> <span class="bp">False</span><span class="p">:</span>
+                    <span class="n">output</span> <span class="o">+=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">output</span> <span class="o">+=</span> <span class="n">line</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">output</span> <span class="o">+=</span> <span class="n">line</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+
+    <span class="c"># Clean up</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">trailing_newlines</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">output</span>
+</div>
+<div class="viewcode-block" id="dedent"><a class="viewcode-back" href="../../minification.html#pyminifier.minification.dedent">[docs]</a><span class="k">def</span> <span class="nf">dedent</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">use_tabs</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Minimizes indentation to save precious bytes.  Optionally, *use_tabs*</span>
+<span class="sd">    may be specified if you want to use tabulators (\t) instead of spaces.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        def foo(bar):</span>
+<span class="sd">            test = &quot;This is a test&quot;</span>
+
+<span class="sd">    Will become::</span>
+
+<span class="sd">        def foo(bar):</span>
+<span class="sd">         test = &quot;This is a test&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">use_tabs</span><span class="p">:</span>
+        <span class="n">indent_char</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\t</span><span class="s">&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">indent_char</span> <span class="o">=</span> <span class="s">&#39; &#39;</span>
+    <span class="n">io_obj</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+    <span class="n">last_lineno</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">last_col</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">prev_start_line</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">indentation</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+    <span class="n">indentation_level</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tok</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokenize</span><span class="o">.</span><span class="n">generate_tokens</span><span class="p">(</span><span class="n">io_obj</span><span class="o">.</span><span class="n">readline</span><span class="p">)):</span>
+        <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">start_line</span><span class="p">,</span> <span class="n">start_col</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">end_line</span><span class="p">,</span> <span class="n">end_col</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">start_line</span> <span class="o">&gt;</span> <span class="n">last_lineno</span><span class="p">:</span>
+            <span class="n">last_col</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">INDENT</span><span class="p">:</span>
+            <span class="n">indentation_level</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">DEDENT</span><span class="p">:</span>
+            <span class="n">indentation_level</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="k">continue</span>
+        <span class="n">indentation</span> <span class="o">=</span> <span class="n">indent_char</span> <span class="o">*</span> <span class="n">indentation_level</span>
+        <span class="k">if</span> <span class="n">start_line</span> <span class="o">&gt;</span> <span class="n">prev_start_line</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">+=</span> <span class="n">indentation</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">token_string</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">start_col</span> <span class="o">&gt;</span> <span class="n">last_col</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">+=</span> <span class="n">indent_char</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">token_string</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">+=</span> <span class="n">token_string</span>
+        <span class="n">prev_start_line</span> <span class="o">=</span> <span class="n">start_line</span>
+        <span class="n">last_col</span> <span class="o">=</span> <span class="n">end_col</span>
+        <span class="n">last_lineno</span> <span class="o">=</span> <span class="n">end_line</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+<span class="c"># TODO:  Rewrite this to use tokens</span></div>
+<div class="viewcode-block" id="fix_empty_methods"><a class="viewcode-back" href="../../minification.html#pyminifier.minification.fix_empty_methods">[docs]</a><span class="k">def</span> <span class="nf">fix_empty_methods</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Appends &#39;pass&#39; to empty methods/functions (i.e. where there was nothing but</span>
+<span class="sd">    a docstring before we removed it =).</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        # Note: This triple-single-quote inside a triple-double-quote is also a</span>
+<span class="sd">        # pyminifier self-test</span>
+<span class="sd">        def myfunc():</span>
+<span class="sd">            &#39;&#39;&#39;This is just a placeholder function.&#39;&#39;&#39;</span>
+
+<span class="sd">    Will become::</span>
+
+<span class="sd">        def myfunc(): pass</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">def_indentation_level</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+    <span class="n">just_matched</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">previous_line</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;^\s*def\s*.*\(.*\):.*$&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span> <span class="c"># Don&#39;t look at blank lines</span>
+            <span class="k">if</span> <span class="n">just_matched</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+                <span class="n">this_indentation_level</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">rstrip</span><span class="p">())</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+                <span class="k">if</span> <span class="n">def_indentation_level</span> <span class="o">==</span> <span class="n">this_indentation_level</span><span class="p">:</span>
+                    <span class="c"># This method is empty, insert a &#39;pass&#39; statement</span>
+                    <span class="n">indent</span> <span class="o">=</span> <span class="s">&quot; &quot;</span> <span class="o">*</span> <span class="p">(</span><span class="n">def_indentation_level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="n">output</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="s">pass</span><span class="se">\n</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">previous_line</span><span class="p">,</span> <span class="n">indent</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">output</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">previous_line</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                <span class="n">just_matched</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+                <span class="n">def_indentation_level</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+                <span class="n">just_matched</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">previous_line</span> <span class="o">=</span> <span class="n">line</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">output</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">line</span> <span class="c"># Another self-test</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">output</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span>
+    <span class="k">return</span> <span class="n">output</span>
+</div>
+<div class="viewcode-block" id="remove_blank_lines"><a class="viewcode-back" href="../../minification.html#pyminifier.minification.remove_blank_lines">[docs]</a><span class="k">def</span> <span class="nf">remove_blank_lines</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Removes blank lines from *source* and returns the result.</span>
+
+<span class="sd">    Example:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        test = &quot;foo&quot;</span>
+
+<span class="sd">        test2 = &quot;bar&quot;</span>
+
+<span class="sd">    Will become:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        test = &quot;foo&quot;</span>
+<span class="sd">        test2 = &quot;bar&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">io_obj</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">io_obj</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+    <span class="k">return</span> <span class="s">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="minify"><a class="viewcode-back" href="../../minification.html#pyminifier.minification.minify">[docs]</a><span class="k">def</span> <span class="nf">minify</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Performs minification on *tokens* according to the values in *options*</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># Remove comments</span>
+    <span class="n">remove_comments</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+    <span class="c"># Remove docstrings</span>
+    <span class="n">remove_docstrings</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">token_utils</span><span class="o">.</span><span class="n">untokenize</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+    <span class="c"># Minify our input script</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">multiline_indicator</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">fix_empty_methods</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">join_multiline_pairs</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">join_multiline_pairs</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s">&#39;[]&#39;</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">join_multiline_pairs</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s">&#39;{}&#39;</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">remove_blank_lines</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">reduce_operators</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">source</span> <span class="o">=</span> <span class="n">dedent</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">use_tabs</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">tabs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Dan McDougall.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'2.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

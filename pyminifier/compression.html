@@ -1,0 +1,271 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>compression.py - For compressing Python code &mdash; pyminifier 2.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="pyminifier 2.0 documentation" href="index.html"/>
+        <link rel="next" title="minification.py - For minifying Python code" href="minification.html"/>
+        <link rel="prev" title="analyze.py - For analyzing Python code" href="analyze.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> pyminifier</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="pyminifier.html"><tt class="docutils literal"><span class="pre">pyminifier.py</span></tt> - The main module for minifying, obfuscating, and compressing Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="analyze.html"><tt class="docutils literal"><span class="pre">analyze.py</span></tt> - For analyzing Python code</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""><tt class="docutils literal"><span class="pre">compression.py</span></tt> - For compressing Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="minification.html"><tt class="docutils literal"><span class="pre">minification.py</span></tt> - For minifying Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="obfuscate.html"><tt class="docutils literal"><span class="pre">obfuscate.py</span></tt> - For obfuscating Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="token_utils.html"><tt class="docutils literal"><span class="pre">token_utils.py</span></tt> - A collection of token-related functions</a></li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">pyminifier</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li><tt class="docutils literal"><span class="pre">compression.py</span></tt> - For compressing Python code</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/compression.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="module-pyminifier.compression">
+<span id="compression-py-for-compressing-python-code"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">compression.py</span></tt> - For compressing Python code<a class="headerlink" href="#module-pyminifier.compression" title="Permalink to this headline">¶</a></h1>
+<p>compression.py - A module providing functions to turn a python script into a
+self-executing archive in a few different formats...</p>
+<p><strong>gz_pack format:</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li>Typically provides better compression than bzip2 (for Python scripts).</li>
+<li>Scripts compressed via this method can still be imported as modules.</li>
+<li>The resulting binary data is base64-encoded which isn&#8217;t optimal compression.</li>
+</ul>
+</div></blockquote>
+<p><strong>bz2_pack format:</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li>In some cases may provide better compression than gzip.</li>
+<li>Scripts compressed via this method can still be imported as modules.</li>
+<li>The resulting binary data is base64-encoded which isn&#8217;t optimal compression.</li>
+</ul>
+</div></blockquote>
+<p><strong>lzma_pack format:</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li>In some cases may provide better compression than bzip2.</li>
+<li>Scripts compressed via this method can still be imported as modules.</li>
+<li>The resulting binary data is base64-encoded which isn&#8217;t optimal compression.</li>
+</ul>
+</div></blockquote>
+<p>The gz_pack, bz2_pack, and lzma_pack formats only work on individual .py
+files.  To pack a number of files at once using this method use the
+<tt class="docutils literal"><span class="pre">--destdir</span></tt> command line option:</p>
+<p><strong>zip_pack format:</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li>Provides the best compression of Python scripts.</li>
+<li>Resulting script cannot be imported as a module.</li>
+<li>Any required modules that are local (implied path) will be automatically included in the archive.</li>
+</ul>
+</div></blockquote>
+<dl class="function">
+<dt id="pyminifier.compression.bz2_pack">
+<tt class="descclassname">pyminifier.compression.</tt><tt class="descname">bz2_pack</tt><big>(</big><em>source</em><big>)</big><a class="reference internal" href="_modules/pyminifier/compression.html#bz2_pack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.compression.bz2_pack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns &#8216;source&#8217; as a bzip2-compressed, self-extracting python script.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This method uses up more space than the zip_pack method but it has the
+advantage in that the resulting .py file can still be imported into a
+python program.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.compression.gz_pack">
+<tt class="descclassname">pyminifier.compression.</tt><tt class="descname">gz_pack</tt><big>(</big><em>source</em><big>)</big><a class="reference internal" href="_modules/pyminifier/compression.html#gz_pack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.compression.gz_pack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns &#8216;source&#8217; as a gzip-compressed, self-extracting python script.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This method uses up more space than the zip_pack method but it has the
+advantage in that the resulting .py file can still be imported into a
+python program.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.compression.lzma_pack">
+<tt class="descclassname">pyminifier.compression.</tt><tt class="descname">lzma_pack</tt><big>(</big><em>source</em><big>)</big><a class="reference internal" href="_modules/pyminifier/compression.html#lzma_pack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.compression.lzma_pack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns &#8216;source&#8217; as a lzma-compressed, self-extracting python script.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This method uses up more space than the zip_pack method but it has the
+advantage in that the resulting .py file can still be imported into a
+python program.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.compression.prepend">
+<tt class="descclassname">pyminifier.compression.</tt><tt class="descname">prepend</tt><big>(</big><em>line</em>, <em>path</em><big>)</big><a class="reference internal" href="_modules/pyminifier/compression.html#prepend"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.compression.prepend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Appends <em>line</em> to the _beginning_ of the file at the given <em>path</em>.</p>
+<p>If <em>line</em> doesn&#8217;t end in a newline one will be appended to the end of it.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.compression.zip_pack">
+<tt class="descclassname">pyminifier.compression.</tt><tt class="descname">zip_pack</tt><big>(</big><em>filepath</em>, <em>options</em><big>)</big><a class="reference internal" href="_modules/pyminifier/compression.html#zip_pack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.compression.zip_pack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a zip archive containing the script at <em>filepath</em> along with all
+imported modules that are local to <em>filepath</em> as a self-extracting python
+script.  A shebang will be appended to the beginning of the resulting
+zip archive which will allow it to</p>
+<p>If being run inside Python 3 and the <cite>lzma</cite> module is available the
+resulting &#8216;pyz&#8217; file will use ZIP_LZMA compression to maximize compression.</p>
+<p><em>options</em> is expected to be the the same options parsed from pyminifier.py
+on the command line.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<ul class="last simple">
+<li>The file resulting from this method cannot be imported as a module into another python program (command line execution only).</li>
+<li>Any required local (implied path) modules will be automatically included (well, it does its best).</li>
+<li>The result will be saved as a .pyz file (which is an extension I invented for this format).</li>
+</ul>
+</div>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="minification.html" class="btn btn-neutral float-right" title="minification.py - For minifying Python code">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="analyze.html" class="btn btn-neutral" title="analyze.py - For analyzing Python code"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Dan McDougall.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'2.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

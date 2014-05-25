@@ -1,0 +1,313 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>minification.py - For minifying Python code &mdash; pyminifier 2.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="pyminifier 2.0 documentation" href="index.html"/>
+        <link rel="next" title="obfuscate.py - For obfuscating Python code" href="obfuscate.html"/>
+        <link rel="prev" title="compression.py - For compressing Python code" href="compression.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> pyminifier</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="pyminifier.html"><tt class="docutils literal"><span class="pre">pyminifier.py</span></tt> - The main module for minifying, obfuscating, and compressing Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="analyze.html"><tt class="docutils literal"><span class="pre">analyze.py</span></tt> - For analyzing Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compression.html"><tt class="docutils literal"><span class="pre">compression.py</span></tt> - For compressing Python code</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""><tt class="docutils literal"><span class="pre">minification.py</span></tt> - For minifying Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="obfuscate.html"><tt class="docutils literal"><span class="pre">obfuscate.py</span></tt> - For obfuscating Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="token_utils.html"><tt class="docutils literal"><span class="pre">token_utils.py</span></tt> - A collection of token-related functions</a></li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">pyminifier</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li><tt class="docutils literal"><span class="pre">minification.py</span></tt> - For minifying Python code</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/minification.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="module-pyminifier.minification">
+<span id="minification-py-for-minifying-python-code"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">minification.py</span></tt> - For minifying Python code<a class="headerlink" href="#module-pyminifier.minification" title="Permalink to this headline">¶</a></h1>
+<p>Module for minification functions.</p>
+<dl class="function">
+<dt id="pyminifier.minification.dedent">
+<tt class="descclassname">pyminifier.minification.</tt><tt class="descname">dedent</tt><big>(</big><em>source</em>, <em>use_tabs=False</em><big>)</big><a class="reference internal" href="_modules/pyminifier/minification.html#dedent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.minification.dedent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Minimizes indentation to save precious bytes.  Optionally, <em>use_tabs</em>
+may be specified if you want to use tabulators (    ) instead of spaces.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">foo</span><span class="p">(</span><span class="n">bar</span><span class="p">):</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="s">&quot;This is a test&quot;</span>
+</pre></div>
+</div>
+<p>Will become:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">foo</span><span class="p">(</span><span class="n">bar</span><span class="p">):</span>
+ <span class="n">test</span> <span class="o">=</span> <span class="s">&quot;This is a test&quot;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.minification.fix_empty_methods">
+<tt class="descclassname">pyminifier.minification.</tt><tt class="descname">fix_empty_methods</tt><big>(</big><em>source</em><big>)</big><a class="reference internal" href="_modules/pyminifier/minification.html#fix_empty_methods"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.minification.fix_empty_methods" title="Permalink to this definition">¶</a></dt>
+<dd><p>Appends &#8216;pass&#8217; to empty methods/functions (i.e. where there was nothing but
+a docstring before we removed it =).</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Note: This triple-single-quote inside a triple-double-quote is also a</span>
+<span class="c"># pyminifier self-test</span>
+<span class="k">def</span> <span class="nf">myfunc</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;This is just a placeholder function.&#39;&#39;&#39;</span>
+</pre></div>
+</div>
+<p>Will become:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">myfunc</span><span class="p">():</span> <span class="k">pass</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.minification.join_multiline_pairs">
+<tt class="descclassname">pyminifier.minification.</tt><tt class="descname">join_multiline_pairs</tt><big>(</big><em>text</em>, <em>pair='()'</em><big>)</big><a class="reference internal" href="_modules/pyminifier/minification.html#join_multiline_pairs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.minification.join_multiline_pairs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds and removes newlines in multiline matching pairs of characters in
+<em>text</em>.</p>
+<p>By default it joins parens () but it will join any two characters given via
+the <em>pair</em> variable.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Doesn&#8217;t remove extraneous whitespace that ends up between the pair.
+Use <cite>reduce_operators()</cite> for that.</p>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">test</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s">&quot;This is inside a multi-line pair of parentheses&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Will become:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">test</span> <span class="o">=</span> <span class="p">(</span>            <span class="s">&quot;This is inside a multi-line pair of parentheses&quot;</span>        <span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.minification.minify">
+<tt class="descclassname">pyminifier.minification.</tt><tt class="descname">minify</tt><big>(</big><em>tokens</em>, <em>options</em><big>)</big><a class="reference internal" href="_modules/pyminifier/minification.html#minify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.minification.minify" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs minification on <em>tokens</em> according to the values in <em>options</em></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.minification.reduce_operators">
+<tt class="descclassname">pyminifier.minification.</tt><tt class="descname">reduce_operators</tt><big>(</big><em>source</em><big>)</big><a class="reference internal" href="_modules/pyminifier/minification.html#reduce_operators"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.minification.reduce_operators" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove spaces between operators in <em>source</em> and returns the result.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">foo</span><span class="p">(</span><span class="n">foo</span><span class="p">,</span> <span class="n">bar</span><span class="p">,</span> <span class="n">blah</span><span class="p">):</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="s">&quot;This is a </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">foo</span>
+</pre></div>
+</div>
+<p>Will become:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">foo</span><span class="p">(</span><span class="n">foo</span><span class="p">,</span><span class="n">bar</span><span class="p">,</span><span class="n">blah</span><span class="p">):</span>
+    <span class="n">test</span><span class="o">=</span><span class="s">&quot;This is a </span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="n">foo</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.minification.remove_blank_lines">
+<tt class="descclassname">pyminifier.minification.</tt><tt class="descname">remove_blank_lines</tt><big>(</big><em>source</em><big>)</big><a class="reference internal" href="_modules/pyminifier/minification.html#remove_blank_lines"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.minification.remove_blank_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes blank lines from <em>source</em> and returns the result.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">test</span> <span class="o">=</span> <span class="s">&quot;foo&quot;</span>
+
+<span class="n">test2</span> <span class="o">=</span> <span class="s">&quot;bar&quot;</span>
+</pre></div>
+</div>
+<p>Will become:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">test</span> <span class="o">=</span> <span class="s">&quot;foo&quot;</span>
+<span class="n">test2</span> <span class="o">=</span> <span class="s">&quot;bar&quot;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.minification.remove_comments">
+<tt class="descclassname">pyminifier.minification.</tt><tt class="descname">remove_comments</tt><big>(</big><em>tokens</em><big>)</big><a class="reference internal" href="_modules/pyminifier/minification.html#remove_comments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.minification.remove_comments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes comments from <em>tokens</em> which is expected to be a list equivalent of
+tokenize.generate_tokens() (so we can update in-place).</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<ul class="last simple">
+<li>If the comment makes up the whole line, the newline will also be removed (so you don&#8217;t end up with lots of blank lines).</li>
+<li>Preserves shebangs and encoding strings.</li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.minification.remove_comments_and_docstrings">
+<tt class="descclassname">pyminifier.minification.</tt><tt class="descname">remove_comments_and_docstrings</tt><big>(</big><em>source</em><big>)</big><a class="reference internal" href="_modules/pyminifier/minification.html#remove_comments_and_docstrings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.minification.remove_comments_and_docstrings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns <em>source</em> minus comments and docstrings.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Uses Python&#8217;s built-in tokenize module to great effect.</p>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">noop</span><span class="p">():</span> <span class="c"># This is a comment</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Does nothing.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">pass</span> <span class="c"># Don&#39;t do anything</span>
+</pre></div>
+</div>
+<p>Will become:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">noop</span><span class="p">():</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.minification.remove_docstrings">
+<tt class="descclassname">pyminifier.minification.</tt><tt class="descname">remove_docstrings</tt><big>(</big><em>tokens</em><big>)</big><a class="reference internal" href="_modules/pyminifier/minification.html#remove_docstrings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.minification.remove_docstrings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes docstrings from <em>tokens</em> which is expected to be a list equivalent
+of <cite>tokenize.generate_tokens()</cite> (so we can update in-place).</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="obfuscate.html" class="btn btn-neutral float-right" title="obfuscate.py - For obfuscating Python code">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="compression.html" class="btn btn-neutral" title="compression.py - For compressing Python code"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Dan McDougall.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'2.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,842 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>pyminifier.obfuscate &mdash; pyminifier 2.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="pyminifier 2.0 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="../../index.html" class="fa fa-home"> pyminifier</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../pyminifier.html"><tt class="docutils literal"><span class="pre">pyminifier.py</span></tt> - The main module for minifying, obfuscating, and compressing Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../analyze.html"><tt class="docutils literal"><span class="pre">analyze.py</span></tt> - For analyzing Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../compression.html"><tt class="docutils literal"><span class="pre">compression.py</span></tt> - For compressing Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../minification.html"><tt class="docutils literal"><span class="pre">minification.py</span></tt> - For minifying Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../obfuscate.html"><tt class="docutils literal"><span class="pre">obfuscate.py</span></tt> - For obfuscating Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../token_utils.html"><tt class="docutils literal"><span class="pre">token_utils.py</span></tt> - A collection of token-related functions</a></li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">pyminifier</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>pyminifier.obfuscate</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <h1>Source code for pyminifier.obfuscate</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python</span>
+<span class="c"># -*- coding: utf-8 -*-</span>
+
+<span class="n">__doc__</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s">A collection of functions for obfuscating code.</span>
+<span class="s">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">tokenize</span><span class="o">,</span> <span class="nn">keyword</span><span class="o">,</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">permutations</span>
+
+<span class="c"># Import our own modules</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">analyze</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">token_utils</span>
+
+<span class="c"># Reserved words can be overridden by the script that imports this module</span>
+<span class="n">reserved_words</span> <span class="o">=</span> <span class="n">keyword</span><span class="o">.</span><span class="n">kwlist</span> <span class="o">+</span> <span class="n">analyze</span><span class="o">.</span><span class="n">builtins</span>
+
+<div class="viewcode-block" id="obfuscation_machine"><a class="viewcode-back" href="../../obfuscate.html#pyminifier.obfuscate.obfuscation_machine">[docs]</a><span class="k">def</span> <span class="nf">obfuscation_machine</span><span class="p">(</span><span class="n">use_unicode</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A generator that returns short sequential combinations of lower and</span>
+<span class="sd">    upper-case letters that will never repeat.</span>
+
+<span class="sd">    If use_unicode is True, use nonlatin cryllic, arabic, and syriac letters</span>
+<span class="sd">    instead of the usual ABCs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">shuffle</span>
+    <span class="c"># This generates a list of the letters a-z:</span>
+    <span class="n">lowercase</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="mi">97</span><span class="p">,</span> <span class="mi">123</span><span class="p">)))</span>
+    <span class="c"># Same thing but ALL CAPS:</span>
+    <span class="n">uppercase</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="mi">65</span><span class="p">,</span> <span class="mi">90</span><span class="p">)))</span>
+    <span class="k">if</span> <span class="n">use_unicode</span><span class="p">:</span>
+        <span class="c"># Python 3 lets us have some *real* fun:</span>
+        <span class="n">arabic</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1580</span><span class="p">,</span> <span class="mi">1594</span><span class="p">)))</span>
+        <span class="n">arabic2</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1656</span><span class="p">,</span> <span class="mi">1663</span><span class="p">)))</span>
+        <span class="n">syriac</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1811</span><span class="p">,</span> <span class="mi">1838</span><span class="p">)))</span>
+        <span class="c">#dingbats = list(map(chr, range(9985, 10174))) #Python 3 doesn&#39;t like :(</span>
+        <span class="n">funfun</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="mi">11704</span><span class="p">,</span> <span class="mi">11710</span><span class="p">)))</span> <span class="c"># Loopy!</span>
+        <span class="n">combined</span> <span class="o">=</span> <span class="n">funfun</span> <span class="o">+</span> <span class="n">arabic</span> <span class="o">+</span> <span class="n">arabic2</span> <span class="o">+</span> <span class="n">syriac</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">combined</span> <span class="o">=</span> <span class="n">lowercase</span> <span class="o">+</span> <span class="n">uppercase</span>
+    <span class="n">shuffle</span><span class="p">(</span><span class="n">combined</span><span class="p">)</span> <span class="c"># Randomize it all to keep things interesting</span>
+    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">perm</span> <span class="ow">in</span> <span class="n">permutations</span><span class="p">(</span><span class="n">combined</span><span class="p">,</span> <span class="n">count</span><span class="p">):</span>
+            <span class="n">perm</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">perm</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">perm</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">reserved_words</span><span class="p">:</span> <span class="c"># Can&#39;t replace reserved words</span>
+                <span class="k">yield</span> <span class="n">perm</span>
+        <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+</div>
+<div class="viewcode-block" id="apply_obfuscation"><a class="viewcode-back" href="../../obfuscate.html#pyminifier.obfuscate.apply_obfuscation">[docs]</a><span class="k">def</span> <span class="nf">apply_obfuscation</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns &#39;source&#39; all obfuscated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">keyword_args</span>
+    <span class="k">global</span> <span class="n">imported_modules</span>
+    <span class="n">tokens</span> <span class="o">=</span> <span class="n">token_utils</span><span class="o">.</span><span class="n">listified_tokenizer</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+    <span class="n">keyword_args</span> <span class="o">=</span> <span class="n">analyze</span><span class="o">.</span><span class="n">enumerate_keyword_args</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+    <span class="n">imported_modules</span> <span class="o">=</span> <span class="n">analyze</span><span class="o">.</span><span class="n">enumerate_imports</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+    <span class="n">variables</span> <span class="o">=</span> <span class="n">find_obfuscatables</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">obfuscatable_variable</span><span class="p">)</span>
+    <span class="n">classes</span> <span class="o">=</span> <span class="n">find_obfuscatables</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">obfuscatable_class</span><span class="p">)</span>
+    <span class="n">functions</span> <span class="o">=</span> <span class="n">find_obfuscatables</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">obfuscatable_function</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">variable</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">:</span>
+        <span class="n">replace_obfuscatables</span><span class="p">(</span>
+            <span class="n">tokens</span><span class="p">,</span> <span class="n">obfuscate_variable</span><span class="p">,</span> <span class="n">variable</span><span class="p">,</span> <span class="n">name_generator</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">function</span> <span class="ow">in</span> <span class="n">functions</span><span class="p">:</span>
+        <span class="n">replace_obfuscatables</span><span class="p">(</span>
+            <span class="n">tokens</span><span class="p">,</span> <span class="n">obfuscate_function</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">name_generator</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">_class</span> <span class="ow">in</span> <span class="n">classes</span><span class="p">:</span>
+        <span class="n">replace_obfuscatables</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">obfuscate_class</span><span class="p">,</span> <span class="n">_class</span><span class="p">,</span> <span class="n">name_generator</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">token_utils</span><span class="o">.</span><span class="n">untokenize</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="find_obfuscatables"><a class="viewcode-back" href="../../obfuscate.html#pyminifier.obfuscate.find_obfuscatables">[docs]</a><span class="k">def</span> <span class="nf">find_obfuscatables</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">obfunc</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Iterates over *tokens*, which must be an equivalent output to what</span>
+<span class="sd">    tokenize.generate_tokens() produces, calling *obfunc* on each with the</span>
+<span class="sd">    following parameters:</span>
+
+<span class="sd">        - **tok:**        The current token</span>
+<span class="sd">        - **prev_tok:**   The previous token</span>
+
+<span class="sd">    *obfunc* is expected to return the token string if that token can be safely</span>
+<span class="sd">    obfuscated **or** one of the following optional values which will instruct</span>
+<span class="sd">    find_obfuscatables() how to proceed:</span>
+
+<span class="sd">        - **&#39;__skipline__&#39;**   Keep skipping tokens until a newline is reached.</span>
+<span class="sd">        - **&#39;__skipnext__&#39;**   Skip the next token in the sequence.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">keyword_args</span>
+    <span class="n">keyword_args</span> <span class="o">=</span> <span class="n">analyze</span><span class="o">.</span><span class="n">enumerate_keyword_args</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+    <span class="k">global</span> <span class="n">imported_modules</span>
+    <span class="n">imported_modules</span> <span class="o">=</span> <span class="n">analyze</span><span class="o">.</span><span class="n">enumerate_imports</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+    <span class="c"># Pretend the first line is &#39;#\n&#39;:</span>
+    <span class="n">prev_tok</span> <span class="o">=</span> <span class="p">(</span><span class="mi">54</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="s">&#39;#</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+    <span class="n">skip_line</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">skip_next</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">obfuscatables</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">count</span><span class="p">,</span> <span class="n">tok</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+        <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">next_tok</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="n">count</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span> <span class="c"># Last token, no biggie</span>
+            <span class="c"># Pretend it is an empty comment ending in a newline</span>
+            <span class="n">next_tok</span> <span class="o">=</span> <span class="p">(</span><span class="mi">54</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="s">&#39;#</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NEWLINE</span><span class="p">:</span>
+            <span class="n">skip_line</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="n">skip_line</span><span class="p">:</span>
+            <span class="n">prev_tok</span> <span class="o">=</span> <span class="n">tok</span>
+            <span class="k">continue</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">obfunc</span><span class="p">(</span><span class="n">tok</span><span class="p">,</span> <span class="n">next_tok</span><span class="p">,</span> <span class="n">prev_tok</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">skip_next</span><span class="p">:</span>
+                <span class="n">skip_next</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">elif</span> <span class="n">result</span> <span class="o">==</span> <span class="s">&#39;__skipline__&#39;</span><span class="p">:</span>
+                <span class="n">skip_line</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">elif</span> <span class="n">result</span> <span class="o">==</span> <span class="s">&#39;__skipnext__&#39;</span><span class="p">:</span>
+                <span class="n">skip_next</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">elif</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">obfuscatables</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">obfuscatables</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span> <span class="c"># If result is empty we need to reset skip_next so we don&#39;t</span>
+            <span class="n">skip_next</span> <span class="o">=</span> <span class="bp">False</span> <span class="c"># accidentally skip the next identifier</span>
+        <span class="n">prev_tok</span> <span class="o">=</span> <span class="n">tok</span>
+    <span class="k">return</span> <span class="n">obfuscatables</span>
+
+<span class="c"># Note: I&#39;m using &#39;tok&#39; instead of &#39;token&#39; since &#39;token&#39; is a built-in module</span></div>
+<div class="viewcode-block" id="obfuscatable_variable"><a class="viewcode-back" href="../../obfuscate.html#pyminifier.obfuscate.obfuscatable_variable">[docs]</a><span class="k">def</span> <span class="nf">obfuscatable_variable</span><span class="p">(</span><span class="n">tok</span><span class="p">,</span> <span class="n">next_tok</span><span class="p">,</span> <span class="n">prev_tok</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a token, returns the token string if it is a variable name that can</span>
+<span class="sd">    be safely obfuscated.</span>
+
+<span class="sd">    Returns &#39;__skipline__&#39; if the rest of the tokens on this line should be skipped.</span>
+<span class="sd">    Returns &#39;__skipnext__&#39; if the next token should be skipped.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">line</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+    <span class="n">prev_tok_type</span> <span class="o">=</span> <span class="n">prev_tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">prev_tok_string</span> <span class="o">=</span> <span class="n">prev_tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">next_tok_string</span> <span class="o">=</span> <span class="n">next_tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">token_string</span> <span class="o">==</span> <span class="s">&quot;=&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;__skipline__&#39;</span>
+    <span class="k">if</span> <span class="n">token_type</span> <span class="o">!=</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NAME</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span> <span class="c"># Skip this token</span>
+    <span class="k">if</span> <span class="n">token_string</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;__&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="n">next_tok_string</span> <span class="o">==</span> <span class="s">&quot;.&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">token_string</span> <span class="ow">in</span> <span class="n">imported_modules</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="n">prev_tok_string</span> <span class="o">==</span> <span class="s">&quot;.&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;__skipnext__&#39;</span>
+    <span class="k">if</span> <span class="n">prev_tok_string</span> <span class="o">==</span> <span class="s">&quot;for&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">token_string</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">token_string</span>
+    <span class="k">if</span> <span class="n">token_string</span> <span class="o">==</span> <span class="s">&quot;for&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="n">token_string</span> <span class="ow">in</span> <span class="n">keyword_args</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="n">token_string</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&quot;def&quot;</span><span class="p">,</span> <span class="s">&quot;class&quot;</span><span class="p">,</span> <span class="s">&#39;if&#39;</span><span class="p">,</span> <span class="s">&#39;elif&#39;</span><span class="p">,</span> <span class="s">&#39;import&#39;</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="s">&#39;__skipline__&#39;</span>
+    <span class="k">if</span> <span class="n">prev_tok_type</span> <span class="o">!=</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">INDENT</span> <span class="ow">and</span> <span class="s">&#39;=&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;__skipline__&#39;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">token_string</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="n">token_string</span> <span class="ow">in</span> <span class="n">reserved_words</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">return</span> <span class="n">token_string</span>
+</div>
+<div class="viewcode-block" id="obfuscatable_class"><a class="viewcode-back" href="../../obfuscate.html#pyminifier.obfuscate.obfuscatable_class">[docs]</a><span class="k">def</span> <span class="nf">obfuscatable_class</span><span class="p">(</span><span class="n">tok</span><span class="p">,</span> <span class="n">next_tok</span><span class="p">,</span> <span class="n">prev_tok</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a token, returns the token string if it is a class name that can be</span>
+<span class="sd">    safely obfuscated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">prev_tok_string</span> <span class="o">=</span> <span class="n">prev_tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">token_type</span> <span class="o">!=</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NAME</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span> <span class="c"># Skip this token</span>
+    <span class="k">if</span> <span class="n">token_string</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;__&#39;</span><span class="p">):</span> <span class="c"># Don&#39;t mess with specials</span>
+        <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="n">prev_tok_string</span> <span class="o">==</span> <span class="s">&quot;class&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">token_string</span>
+</div>
+<div class="viewcode-block" id="obfuscatable_function"><a class="viewcode-back" href="../../obfuscate.html#pyminifier.obfuscate.obfuscatable_function">[docs]</a><span class="k">def</span> <span class="nf">obfuscatable_function</span><span class="p">(</span><span class="n">tok</span><span class="p">,</span> <span class="n">next_tok</span><span class="p">,</span> <span class="n">prev_tok</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a token, returns the token string if it is a function or method name</span>
+<span class="sd">    that can be safely obfuscated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">prev_tok_string</span> <span class="o">=</span> <span class="n">prev_tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">token_type</span> <span class="o">!=</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NAME</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span> <span class="c"># Skip this token</span>
+    <span class="k">if</span> <span class="n">token_string</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;__&#39;</span><span class="p">):</span> <span class="c"># Don&#39;t mess with specials</span>
+        <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="n">prev_tok_string</span> <span class="o">==</span> <span class="s">&quot;def&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">token_string</span>
+</div>
+<div class="viewcode-block" id="replace_obfuscatables"><a class="viewcode-back" href="../../obfuscate.html#pyminifier.obfuscate.replace_obfuscatables">[docs]</a><span class="k">def</span> <span class="nf">replace_obfuscatables</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">obfunc</span><span class="p">,</span> <span class="n">replace</span><span class="p">,</span> <span class="n">name_generator</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Iterates over *tokens*, which must be an equivalent output to what</span>
+<span class="sd">    tokenize.generate_tokens() produces, replacing the given identifier name</span>
+<span class="sd">    (*replace*) by calling *obfunc* on each token with the following parameters:</span>
+
+<span class="sd">        - **module:**       The name of the script we&#39;re currently obfuscating.</span>
+<span class="sd">        - **tok:**          The current token.</span>
+<span class="sd">        - **prev_tok:**     The previous token in the sequence.</span>
+<span class="sd">        - **next_tok:**     The next token in the sequence.</span>
+<span class="sd">        - **replace:**      The token string that we&#39;re replacing.</span>
+<span class="sd">        - **replacement:**  A randomly generated, unique value that will be used to replace, *replace*.</span>
+<span class="sd">        - **right_of_equal:**   A True or False value representing whether or not the token is to the right of an equal sign.  **Note:** This gets reset to False if a comma or open paren are encountered.</span>
+<span class="sd">        - **inside_parens:**    An integer that is incremented whenever an open paren is encountered and decremented when a close paren is encountered.</span>
+<span class="sd">        - **inside_function:**  If not False, the name of the function definition we&#39;re inside of (used in conjunction with *keyword_args* to determine if a safe replacement can be made).</span>
+
+<span class="sd">    *obfunc* is expected to return the token string if that token can be safely</span>
+<span class="sd">    obfuscated **or** one of the following optional values which will instruct</span>
+<span class="sd">    find_obfuscatables() how to proceed:</span>
+
+<span class="sd">        - **&#39;__open_paren__&#39;**        Increment the inside_parens value</span>
+<span class="sd">        - **&#39;__close_paren__&#39;**       Decrement the inside_parens value</span>
+<span class="sd">        - **&#39;__comma__&#39;**             Reset the right_of_equal value to False</span>
+<span class="sd">        - **&#39;__right_of_equal__&#39;**    Sets the right_of_equal value to True</span>
+
+<span class="sd">    **Note:** The right_of_equal and the inside_parens values are reset whenever a NEWLINE is encountered.</span>
+
+<span class="sd">    When obfuscating a list of files, *table* is used to keep track of which</span>
+<span class="sd">    obfuscatable identifiers are which inside each resulting file.  It must be</span>
+<span class="sd">    an empty dictionary that will be populated like so::</span>
+
+<span class="sd">        {orig_name: obfuscated_name}</span>
+
+<span class="sd">    This *table* of &quot;what is what&quot; will be used to ensure that references from</span>
+<span class="sd">    one script/module that call another are kept in sync when they are replaced</span>
+<span class="sd">    with obfuscated values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># Pretend the first line is &#39;#\n&#39;:</span>
+    <span class="n">prev_tok</span> <span class="o">=</span> <span class="p">(</span><span class="mi">54</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="s">&#39;#</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+    <span class="n">skip_line</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">skip_next</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">right_of_equal</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">inside_parens</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">inside_function</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">indent</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">function_indent</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">replacement</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">name_generator</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">count</span><span class="p">,</span> <span class="n">tok</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">next_tok</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="n">count</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span> <span class="c"># Last token, no biggie</span>
+            <span class="c"># Pretend it is a newline</span>
+            <span class="n">next_tok</span> <span class="o">=</span> <span class="p">(</span><span class="mi">54</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="s">&#39;#</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+        <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NEWLINE</span><span class="p">:</span>
+            <span class="n">skip_line</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="n">right_of_equal</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="n">inside_parens</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">elif</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">INDENT</span><span class="p">:</span>
+            <span class="n">indent</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">DEDENT</span><span class="p">:</span>
+            <span class="n">indent</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">inside_function</span> <span class="ow">and</span> <span class="n">function_indent</span> <span class="o">==</span> <span class="n">indent</span><span class="p">:</span>
+                <span class="n">function_indent</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">inside_function</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="n">token_string</span> <span class="o">==</span> <span class="s">&quot;def&quot;</span><span class="p">:</span>
+            <span class="n">function_indent</span> <span class="o">=</span> <span class="n">indent</span>
+            <span class="n">function_name</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="n">count</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">inside_function</span> <span class="o">=</span> <span class="n">function_name</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">obfunc</span><span class="p">(</span>
+            <span class="n">tok</span><span class="p">,</span>
+            <span class="n">next_tok</span><span class="p">,</span>
+            <span class="n">prev_tok</span><span class="p">,</span>
+            <span class="n">replace</span><span class="p">,</span>
+            <span class="n">replacement</span><span class="p">,</span>
+            <span class="n">right_of_equal</span><span class="p">,</span>
+            <span class="n">inside_parens</span><span class="p">,</span>
+            <span class="n">inside_function</span>
+        <span class="p">)</span>
+        <span class="n">prev_tok</span> <span class="o">=</span> <span class="n">tok</span>
+        <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">skip_next</span><span class="p">:</span>
+                <span class="n">skip_next</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">elif</span> <span class="n">skip_line</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="k">elif</span> <span class="n">result</span> <span class="o">==</span> <span class="s">&#39;__skipline__&#39;</span><span class="p">:</span>
+                <span class="n">skip_line</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">elif</span> <span class="n">result</span> <span class="o">==</span> <span class="s">&#39;__skipnext__&#39;</span><span class="p">:</span>
+                <span class="n">skip_next</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">elif</span> <span class="n">result</span> <span class="o">==</span> <span class="s">&#39;__open_paren__&#39;</span><span class="p">:</span>
+                <span class="n">right_of_equal</span> <span class="o">=</span> <span class="bp">False</span>
+                <span class="n">inside_parens</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="n">result</span> <span class="o">==</span> <span class="s">&#39;__close_paren__&#39;</span><span class="p">:</span>
+                <span class="n">inside_parens</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="n">result</span> <span class="o">==</span> <span class="s">&#39;__comma__&#39;</span><span class="p">:</span>
+                <span class="n">right_of_equal</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">elif</span> <span class="n">result</span> <span class="o">==</span> <span class="s">&#39;__right_of_equal__&#39;</span><span class="p">:</span>
+                <span class="n">right_of_equal</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">table</span><span class="p">:</span> <span class="c"># Save it for later use in other files</span>
+                    <span class="n">combined_name</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">token_string</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span> <span class="c"># Attempt to use an existing value</span>
+                        <span class="n">tokens</span><span class="p">[</span><span class="n">count</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">table</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">combined_name</span><span class="p">]</span>
+                    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span> <span class="c"># Doesn&#39;t exist, add it to table</span>
+                        <span class="n">table</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">combined_name</span><span class="p">:</span> <span class="n">result</span><span class="p">})</span>
+                        <span class="n">tokens</span><span class="p">[</span><span class="n">count</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">tokens</span><span class="p">[</span><span class="n">count</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+</div>
+<div class="viewcode-block" id="obfuscate_variable"><a class="viewcode-back" href="../../obfuscate.html#pyminifier.obfuscate.obfuscate_variable">[docs]</a><span class="k">def</span> <span class="nf">obfuscate_variable</span><span class="p">(</span>
+        <span class="n">tok</span><span class="p">,</span>
+        <span class="n">next_tok</span><span class="p">,</span>
+        <span class="n">prev_tok</span><span class="p">,</span>
+        <span class="n">replace</span><span class="p">,</span>
+        <span class="n">replacement</span><span class="p">,</span>
+        <span class="n">right_of_equal</span><span class="p">,</span>
+        <span class="n">inside_parens</span><span class="p">,</span>
+        <span class="n">inside_function</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    If the token string inside *tok* matches *replace*, return *replacement*.</span>
+<span class="sd">    *next_tok*, *prev_tok*, *right_of_equal*, and *inside_parens* are used to</span>
+<span class="sd">    determine whether or not this token is safe to obfuscate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">prev_tok_string</span> <span class="o">=</span> <span class="n">prev_tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">token_string</span> <span class="o">==</span> <span class="s">&quot;import&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;__skipline__&#39;</span>
+    <span class="k">if</span> <span class="n">next_tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;.&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">token_string</span> <span class="ow">in</span> <span class="n">imported_modules</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="n">token_string</span> <span class="o">==</span> <span class="s">&quot;=&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;__right_of_equal__&#39;</span>
+    <span class="k">if</span> <span class="n">token_string</span> <span class="o">==</span> <span class="s">&quot;(&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;__open_paren__&#39;</span>
+    <span class="k">if</span> <span class="n">token_string</span> <span class="o">==</span> <span class="s">&quot;)&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;__close_paren__&#39;</span>
+    <span class="k">if</span> <span class="n">token_string</span> <span class="o">==</span> <span class="s">&quot;,&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;__comma__&#39;</span>
+    <span class="k">if</span> <span class="n">token_type</span> <span class="o">!=</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NAME</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span> <span class="c"># Skip this token</span>
+    <span class="k">if</span> <span class="n">token_string</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;__&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="n">prev_tok_string</span> <span class="o">==</span> <span class="s">&#39;def&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;__skipnext__&#39;</span> <span class="c"># Don&#39;t want to touch functions</span>
+    <span class="k">if</span> <span class="n">token_string</span> <span class="o">==</span> <span class="n">replace</span> <span class="ow">and</span> <span class="n">prev_tok_string</span> <span class="o">!=</span> <span class="s">&#39;.&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">inside_function</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">token_string</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">keyword_args</span><span class="p">[</span><span class="n">inside_function</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">right_of_equal</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">inside_parens</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">replacement</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">next_tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;=&#39;</span><span class="p">:</span>
+                            <span class="k">return</span> <span class="n">replacement</span>
+                <span class="k">elif</span> <span class="ow">not</span> <span class="n">inside_parens</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">replacement</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">next_tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;=&#39;</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">replacement</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">right_of_equal</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">inside_parens</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">replacement</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">next_tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;=&#39;</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">replacement</span>
+        <span class="k">elif</span> <span class="n">right_of_equal</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">inside_parens</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">replacement</span>
+</div>
+<div class="viewcode-block" id="obfuscate_function"><a class="viewcode-back" href="../../obfuscate.html#pyminifier.obfuscate.obfuscate_function">[docs]</a><span class="k">def</span> <span class="nf">obfuscate_function</span><span class="p">(</span><span class="n">tok</span><span class="p">,</span> <span class="n">next_tok</span><span class="p">,</span> <span class="n">prev_tok</span><span class="p">,</span> <span class="n">replace</span><span class="p">,</span> <span class="n">replacement</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    If the token string inside *tok* matches *replace*, return *replacement*.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">prev_tok_string</span> <span class="o">=</span> <span class="n">prev_tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">token_type</span> <span class="o">!=</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NAME</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span> <span class="c"># Skip this token</span>
+    <span class="k">if</span> <span class="n">token_string</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;__&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="n">prev_tok_string</span> <span class="o">!=</span> <span class="s">&#39;.&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">token_string</span> <span class="o">==</span> <span class="n">replace</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">replacement</span>
+</div>
+<div class="viewcode-block" id="obfuscate_class"><a class="viewcode-back" href="../../obfuscate.html#pyminifier.obfuscate.obfuscate_class">[docs]</a><span class="k">def</span> <span class="nf">obfuscate_class</span><span class="p">(</span><span class="n">tok</span><span class="p">,</span> <span class="n">next_tok</span><span class="p">,</span> <span class="n">prev_tok</span><span class="p">,</span> <span class="n">replace</span><span class="p">,</span> <span class="n">replacement</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    If the token string inside *tok* matches *replace*, return *replacement*.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">prev_tok_string</span> <span class="o">=</span> <span class="n">prev_tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">token_type</span> <span class="o">!=</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NAME</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span> <span class="c"># Skip this token</span>
+    <span class="k">if</span> <span class="n">token_string</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;__&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="n">prev_tok_string</span> <span class="o">!=</span> <span class="s">&#39;.&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">token_string</span> <span class="o">==</span> <span class="n">replace</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">replacement</span>
+</div>
+<div class="viewcode-block" id="obfuscate_unique"><a class="viewcode-back" href="../../obfuscate.html#pyminifier.obfuscate.obfuscate_unique">[docs]</a><span class="k">def</span> <span class="nf">obfuscate_unique</span><span class="p">(</span><span class="n">tok</span><span class="p">,</span> <span class="n">next_tok</span><span class="p">,</span> <span class="n">prev_tok</span><span class="p">,</span> <span class="n">replace</span><span class="p">,</span> <span class="n">replacement</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    If the token string inside *tok* matches *replace*, return *replacement*.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        This function is only for replacing absolutely unique ocurrences of</span>
+<span class="sd">        *replace* (where we don&#39;t have to worry about their position).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">token_type</span> <span class="o">!=</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NAME</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span> <span class="c"># Skip this token</span>
+    <span class="k">if</span> <span class="n">token_string</span> <span class="o">==</span> <span class="n">replace</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">replacement</span>
+</div>
+<div class="viewcode-block" id="remap_name"><a class="viewcode-back" href="../../obfuscate.html#pyminifier.obfuscate.remap_name">[docs]</a><span class="k">def</span> <span class="nf">remap_name</span><span class="p">(</span><span class="n">name_generator</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Produces a series of variable assignments in the form of::</span>
+
+<span class="sd">        &lt;obfuscated name&gt; = &lt;some identifier&gt;</span>
+
+<span class="sd">    for each item in *names* using *name_generator* to come up with the</span>
+<span class="sd">    replacement names.</span>
+
+<span class="sd">    If *table* is provided, replacements will be looked up there before</span>
+<span class="sd">    generating a new unique name.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">table</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">table</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">replacement</span> <span class="o">=</span> <span class="n">table</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">replacement</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">name_generator</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">=</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">replacement</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+</div>
+<div class="viewcode-block" id="insert_in_next_line"><a class="viewcode-back" href="../../obfuscate.html#pyminifier.obfuscate.insert_in_next_line">[docs]</a><span class="k">def</span> <span class="nf">insert_in_next_line</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Inserts the given string after the next newline inside tokens starting at</span>
+<span class="sd">    *tokens[index]*.  Indents must be a list of indentation tokens that will</span>
+<span class="sd">    preceeed the insert (can be an empty list).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tokenized_string</span> <span class="o">=</span> <span class="n">token_utils</span><span class="o">.</span><span class="n">listified_tokenizer</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tok</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="p">:])):</span>
+        <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">token_type</span> <span class="ow">in</span> <span class="p">[</span><span class="n">tokenize</span><span class="o">.</span><span class="n">NL</span><span class="p">,</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NEWLINE</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">count</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokenized_string</span><span class="p">):</span>
+                <span class="n">tokens</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">index</span><span class="o">+</span><span class="n">count</span><span class="o">+</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+            <span class="k">break</span>
+</div>
+<div class="viewcode-block" id="obfuscate_builtins"><a class="viewcode-back" href="../../obfuscate.html#pyminifier.obfuscate.obfuscate_builtins">[docs]</a><span class="k">def</span> <span class="nf">obfuscate_builtins</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">name_generator</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Inserts an assignment, &#39;&lt;obfuscated identifier&gt; = &lt;builtin function&gt;&#39;  at</span>
+<span class="sd">    the beginning of *tokens* (after the shebang and encoding if present) for</span>
+<span class="sd">    every Python built-in function that is used inside *tokens*.  Also, replaces</span>
+<span class="sd">    all of said builti-in functions in *tokens* with each respective obfuscated</span>
+<span class="sd">    identifer.</span>
+
+<span class="sd">    Obfuscated identifier names are pulled out of name_generator via next().</span>
+
+<span class="sd">    If *table* is provided, replacements will be looked up there before</span>
+<span class="sd">    generating a new unique name.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">used_builtins</span> <span class="o">=</span> <span class="n">analyze</span><span class="o">.</span><span class="n">enumerate_builtins</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+    <span class="n">obfuscated_assignments</span> <span class="o">=</span> <span class="n">remap_name</span><span class="p">(</span><span class="n">name_generator</span><span class="p">,</span> <span class="n">used_builtins</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
+    <span class="n">replacements</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">assignment</span> <span class="ow">in</span> <span class="n">obfuscated_assignments</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">):</span>
+        <span class="n">replacements</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">assignment</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;=&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">replacement_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">used_builtins</span><span class="p">,</span> <span class="n">replacements</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">table</span><span class="p">:</span>
+        <span class="n">table</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">replacement_dict</span><span class="p">)</span>
+    <span class="n">iter_replacements</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">replacements</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">builtin</span> <span class="ow">in</span> <span class="n">used_builtins</span><span class="p">:</span>
+        <span class="n">replace_obfuscatables</span><span class="p">(</span>
+            <span class="n">module</span><span class="p">,</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">obfuscate_unique</span><span class="p">,</span> <span class="n">builtin</span><span class="p">,</span> <span class="n">iter_replacements</span><span class="p">)</span>
+    <span class="c"># Check for shebangs and encodings before we do anything else</span>
+    <span class="n">skip_tokens</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">matched_shebang</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">matched_encoding</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">]:</span> <span class="c"># Will always be in the first four tokens</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">analyze</span><span class="o">.</span><span class="n">shebang</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span> <span class="c"># (e.g. &#39;#!/usr/bin/env python&#39;)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">matched_shebang</span><span class="p">:</span>
+                <span class="n">matched_shebang</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">skip_tokens</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">analyze</span><span class="o">.</span><span class="n">encoding</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span> <span class="c"># (e.g. &#39;# -*- coding: utf-8 -*-&#39;)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">matched_encoding</span><span class="p">:</span>
+                <span class="n">matched_encoding</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">skip_tokens</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">insert_in_next_line</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">skip_tokens</span><span class="p">,</span> <span class="n">obfuscated_assignments</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="obfuscate_global_import_methods"><a class="viewcode-back" href="../../obfuscate.html#pyminifier.obfuscate.obfuscate_global_import_methods">[docs]</a><span class="k">def</span> <span class="nf">obfuscate_global_import_methods</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">name_generator</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Replaces the used methods of globally-imported modules with obfuscated</span>
+<span class="sd">    equivalents.  Updates *tokens* in-place.</span>
+
+<span class="sd">    *module* must be the name of the module we&#39;re currently obfuscating</span>
+
+<span class="sd">    If *table* is provided, replacements for import methods will be attempted</span>
+<span class="sd">    to be looked up there before generating a new unique name.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">global_imports</span> <span class="o">=</span> <span class="n">analyze</span><span class="o">.</span><span class="n">enumerate_global_imports</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+    <span class="n">local_imports</span> <span class="o">=</span> <span class="n">analyze</span><span class="o">.</span><span class="n">enumerate_local_modules</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
+    <span class="n">module_methods</span> <span class="o">=</span> <span class="n">analyze</span><span class="o">.</span><span class="n">enumerate_import_methods</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+    <span class="c"># Make a 1-to-1 mapping dict of module_method&lt;-&gt;replacement:</span>
+    <span class="k">if</span> <span class="n">table</span><span class="p">:</span>
+        <span class="n">replacement_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">module_method</span> <span class="ow">in</span> <span class="n">module_methods</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">module_method</span> <span class="ow">in</span> <span class="n">table</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">replacement_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">module_method</span><span class="p">:</span> <span class="n">table</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">module_method</span><span class="p">]})</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">replacement_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">module_method</span><span class="p">:</span> <span class="nb">next</span><span class="p">(</span><span class="n">name_generator</span><span class="p">)})</span>
+        <span class="c"># Update the global lookup table with the new entries:</span>
+        <span class="n">table</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">replacement_dict</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">method_map</span> <span class="o">=</span> <span class="p">[</span><span class="nb">next</span><span class="p">(</span><span class="n">name_generator</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">module_methods</span><span class="p">]</span>
+        <span class="n">replacement_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">module_methods</span><span class="p">,</span> <span class="n">method_map</span><span class="p">))</span>
+    <span class="n">import_line</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="c"># Replace module methods with our obfuscated names in *tokens*</span>
+    <span class="k">for</span> <span class="n">module_method</span> <span class="ow">in</span> <span class="n">module_methods</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">tok</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+            <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">token_type</span> <span class="o">!=</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NAME</span><span class="p">:</span>
+                <span class="k">continue</span> <span class="c"># Speedup</span>
+            <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">token_string</span> <span class="o">==</span> <span class="n">module_method</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;.&#39;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">module_method</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]:</span>
+                        <span class="k">if</span> <span class="n">table</span><span class="p">:</span> <span class="c"># Attempt to use an existing value</span>
+                            <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">table</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">module_method</span><span class="p">]</span>
+                            <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+                            <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">replacement_dict</span><span class="p">[</span><span class="n">module_method</span><span class="p">]</span>
+                            <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+                            <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+    <span class="c"># Insert our map of replacement=what after each respective module import</span>
+    <span class="k">for</span> <span class="n">module_method</span><span class="p">,</span> <span class="n">replacement</span> <span class="ow">in</span> <span class="n">replacement_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">indents</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">[:]:</span>
+            <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NEWLINE</span><span class="p">:</span>
+                <span class="n">import_line</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">elif</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">INDENT</span><span class="p">:</span>
+                <span class="n">indents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tok</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">DEDENT</span><span class="p">:</span>
+                <span class="n">indents</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">token_string</span> <span class="o">==</span> <span class="s">&quot;import&quot;</span><span class="p">:</span>
+                <span class="n">import_line</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">elif</span> <span class="n">import_line</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">token_string</span> <span class="o">==</span> <span class="n">module_method</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]:</span>
+                    <span class="c"># Insert the obfuscation assignment after the import</span>
+                    <span class="n">imported_module</span> <span class="o">=</span> <span class="s">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">module_method</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">table</span> <span class="ow">and</span> <span class="n">imported_module</span> <span class="ow">in</span> <span class="n">local_imports</span><span class="p">:</span>
+                        <span class="n">line</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">=</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span> <span class="c"># This ends up being 6 tokens</span>
+                            <span class="n">replacement_dict</span><span class="p">[</span><span class="n">module_method</span><span class="p">],</span>
+                            <span class="n">imported_module</span><span class="p">,</span>
+                            <span class="n">replacement_dict</span><span class="p">[</span><span class="n">module_method</span><span class="p">]</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">line</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">=</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span> <span class="c"># This ends up being 6 tokens</span>
+                            <span class="n">replacement_dict</span><span class="p">[</span><span class="n">module_method</span><span class="p">],</span> <span class="n">module_method</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">indent</span> <span class="ow">in</span> <span class="n">indents</span><span class="p">:</span> <span class="c"># Fix indentation</span>
+                        <span class="n">line</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">indent</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">line</span><span class="p">)</span>
+                        <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">insert_in_next_line</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                    <span class="n">index</span> <span class="o">+=</span> <span class="mi">6</span> <span class="c"># To make up for the six tokens we inserted</span>
+            <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+</div>
+<div class="viewcode-block" id="obfuscate"><a class="viewcode-back" href="../../obfuscate.html#pyminifier.obfuscate.obfuscate">[docs]</a><span class="k">def</span> <span class="nf">obfuscate</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">name_generator</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Obfuscates *tokens* in-place.  *options* is expected to be the options</span>
+<span class="sd">    variable passed through from pyminifier.py.</span>
+
+<span class="sd">    *module* must be the name of the module we&#39;re currently obfuscating</span>
+
+<span class="sd">    If *name_generator* is provided it will be used to obtain replacement values</span>
+<span class="sd">    for identifiers.  If not, a new instance of</span>
+
+<span class="sd">    If *table* is given (should be a list containing a single dictionary), it</span>
+<span class="sd">    will be used to perform lookups of replacements and any new replacements</span>
+<span class="sd">    will be added to it.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># Need a universal instance of our generator to avoid duplicates</span>
+    <span class="n">identifier_length</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">replacement_length</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">name_generator</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">use_nonlatin</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">name_generator</span> <span class="o">=</span> <span class="n">obfuscation_machine</span><span class="p">(</span>
+                    <span class="n">use_unicode</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="n">identifier_length</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span>
+                    <span class="s">&quot;ERROR: You can&#39;t use nonlatin characters without Python 3&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name_generator</span> <span class="o">=</span> <span class="n">obfuscation_machine</span><span class="p">(</span><span class="n">count</span><span class="o">=</span><span class="n">identifier_length</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">obfuscate</span><span class="p">:</span>
+        <span class="n">variables</span> <span class="o">=</span> <span class="n">find_obfuscatables</span><span class="p">(</span>
+            <span class="n">tokens</span><span class="p">,</span> <span class="n">obfuscatable_variable</span><span class="p">)</span>
+        <span class="n">classes</span> <span class="o">=</span> <span class="n">find_obfuscatables</span><span class="p">(</span>
+            <span class="n">tokens</span><span class="p">,</span> <span class="n">obfuscatable_class</span><span class="p">)</span>
+        <span class="n">functions</span> <span class="o">=</span> <span class="n">find_obfuscatables</span><span class="p">(</span>
+            <span class="n">tokens</span><span class="p">,</span> <span class="n">obfuscatable_function</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">variable</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">:</span>
+            <span class="n">replace_obfuscatables</span><span class="p">(</span>
+                <span class="n">module</span><span class="p">,</span>
+                <span class="n">tokens</span><span class="p">,</span>
+                <span class="n">obfuscate_variable</span><span class="p">,</span>
+                <span class="n">variable</span><span class="p">,</span>
+                <span class="n">name_generator</span><span class="p">,</span>
+                <span class="n">table</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">function</span> <span class="ow">in</span> <span class="n">functions</span><span class="p">:</span>
+            <span class="n">replace_obfuscatables</span><span class="p">(</span>
+                <span class="n">module</span><span class="p">,</span>
+                <span class="n">tokens</span><span class="p">,</span>
+                <span class="n">obfuscate_function</span><span class="p">,</span>
+                <span class="n">function</span><span class="p">,</span>
+                <span class="n">name_generator</span><span class="p">,</span>
+                <span class="n">table</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">_class</span> <span class="ow">in</span> <span class="n">classes</span><span class="p">:</span>
+            <span class="n">replace_obfuscatables</span><span class="p">(</span>
+                <span class="n">module</span><span class="p">,</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">obfuscate_class</span><span class="p">,</span> <span class="n">_class</span><span class="p">,</span> <span class="n">name_generator</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
+        <span class="n">obfuscate_global_import_methods</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">name_generator</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
+        <span class="c">#print(&quot;# table: \n%s&quot; % table)</span>
+        <span class="n">obfuscate_builtins</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">name_generator</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">obf_classes</span><span class="p">:</span>
+            <span class="n">classes</span> <span class="o">=</span> <span class="n">find_obfuscatables</span><span class="p">(</span>
+                <span class="n">tokens</span><span class="p">,</span> <span class="n">obfuscatable_class</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_class</span> <span class="ow">in</span> <span class="n">classes</span><span class="p">:</span>
+                <span class="n">replace_obfuscatables</span><span class="p">(</span>
+                    <span class="n">module</span><span class="p">,</span>
+                    <span class="n">tokens</span><span class="p">,</span>
+                    <span class="n">obfuscate_class</span><span class="p">,</span>
+                    <span class="n">_class</span><span class="p">,</span>
+                    <span class="n">name_generator</span><span class="p">,</span>
+                    <span class="n">table</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">obf_functions</span><span class="p">:</span>
+            <span class="n">functions</span> <span class="o">=</span> <span class="n">find_obfuscatables</span><span class="p">(</span>
+                <span class="n">tokens</span><span class="p">,</span> <span class="n">obfuscatable_function</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">function</span> <span class="ow">in</span> <span class="n">functions</span><span class="p">:</span>
+                <span class="n">replace_obfuscatables</span><span class="p">(</span>
+                    <span class="n">module</span><span class="p">,</span>
+                    <span class="n">tokens</span><span class="p">,</span>
+                    <span class="n">obfuscate_function</span><span class="p">,</span>
+                    <span class="n">function</span><span class="p">,</span>
+                    <span class="n">name_generator</span><span class="p">,</span>
+                    <span class="n">table</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">obf_variables</span><span class="p">:</span>
+            <span class="n">variables</span> <span class="o">=</span> <span class="n">find_obfuscatables</span><span class="p">(</span>
+                <span class="n">tokens</span><span class="p">,</span> <span class="n">obfuscatable_variable</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">variable</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">:</span>
+                <span class="n">replace_obfuscatables</span><span class="p">(</span>
+                    <span class="n">module</span><span class="p">,</span>
+                    <span class="n">tokens</span><span class="p">,</span>
+                    <span class="n">obfuscate_variable</span><span class="p">,</span>
+                    <span class="n">variable</span><span class="p">,</span>
+                    <span class="n">name_generator</span><span class="p">,</span>
+                    <span class="n">table</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">obf_import_methods</span><span class="p">:</span>
+            <span class="n">obfuscate_global_import_methods</span><span class="p">(</span>
+                <span class="n">module</span><span class="p">,</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">name_generator</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">obf_builtins</span><span class="p">:</span>
+            <span class="n">obfuscate_builtins</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">name_generator</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
+</div>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="k">global</span> <span class="n">name_generator</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;Usage: </span><span class="si">%s</span><span class="s"> &lt;filename.py&gt;&quot;</span> <span class="o">%</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">name_generator</span> <span class="o">=</span> <span class="n">obfuscation_machine</span><span class="p">(</span><span class="n">use_unicode</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">name_generator</span> <span class="o">=</span> <span class="n">obfuscation_machine</span><span class="p">(</span><span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">apply_obfuscation</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Dan McDougall.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'2.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

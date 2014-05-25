@@ -1,0 +1,257 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>analyze.py - For analyzing Python code &mdash; pyminifier 2.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="pyminifier 2.0 documentation" href="index.html"/>
+        <link rel="next" title="compression.py - For compressing Python code" href="compression.html"/>
+        <link rel="prev" title="pyminifier.py - The main module for minifying, obfuscating, and compressing Python code" href="pyminifier.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> pyminifier</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="pyminifier.html"><tt class="docutils literal"><span class="pre">pyminifier.py</span></tt> - The main module for minifying, obfuscating, and compressing Python code</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""><tt class="docutils literal"><span class="pre">analyze.py</span></tt> - For analyzing Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compression.html"><tt class="docutils literal"><span class="pre">compression.py</span></tt> - For compressing Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="minification.html"><tt class="docutils literal"><span class="pre">minification.py</span></tt> - For minifying Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="obfuscate.html"><tt class="docutils literal"><span class="pre">obfuscate.py</span></tt> - For obfuscating Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="token_utils.html"><tt class="docutils literal"><span class="pre">token_utils.py</span></tt> - A collection of token-related functions</a></li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">pyminifier</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li><tt class="docutils literal"><span class="pre">analyze.py</span></tt> - For analyzing Python code</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/analyze.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="module-pyminifier.analyze">
+<span id="analyze-py-for-analyzing-python-code"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">analyze.py</span></tt> - For analyzing Python code<a class="headerlink" href="#module-pyminifier.analyze" title="Permalink to this headline">¶</a></h1>
+<p>A module of useful functions for analyzing Python code.</p>
+<dl class="function">
+<dt id="pyminifier.analyze.enumerate_builtins">
+<tt class="descclassname">pyminifier.analyze.</tt><tt class="descname">enumerate_builtins</tt><big>(</big><em>tokens</em><big>)</big><a class="reference internal" href="_modules/pyminifier/analyze.html#enumerate_builtins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.analyze.enumerate_builtins" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of all the builtins being used in <em>tokens</em>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.analyze.enumerate_dynamic_imports">
+<tt class="descclassname">pyminifier.analyze.</tt><tt class="descname">enumerate_dynamic_imports</tt><big>(</big><em>tokens</em><big>)</big><a class="reference internal" href="_modules/pyminifier/analyze.html#enumerate_dynamic_imports"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.analyze.enumerate_dynamic_imports" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of all dynamically imported modules (those inside of
+classes or functions) in the form of {&lt;func or class name&gt;: [&lt;modules&gt;]}</p>
+<dl class="docutils">
+<dt>Example:</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">enumerate_dynamic_modules</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+<span class="go">{&#39;myfunc&#39;: [&#39;zlib&#39;, &#39;base64&#39;]}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.analyze.enumerate_global_imports">
+<tt class="descclassname">pyminifier.analyze.</tt><tt class="descname">enumerate_global_imports</tt><big>(</big><em>tokens</em><big>)</big><a class="reference internal" href="_modules/pyminifier/analyze.html#enumerate_global_imports"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.analyze.enumerate_global_imports" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of all globally imported modules (skips modules imported
+inside of classes, methods, or functions).</p>
+<dl class="docutils">
+<dt>Example:</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">enumerate_global_modules</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+<span class="go">[&#39;sys&#39;, &#39;os&#39;, &#39;tokenize&#39;, &#39;re&#39;]</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.analyze.enumerate_import_methods">
+<tt class="descclassname">pyminifier.analyze.</tt><tt class="descname">enumerate_import_methods</tt><big>(</big><em>tokens</em><big>)</big><a class="reference internal" href="_modules/pyminifier/analyze.html#enumerate_import_methods"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.analyze.enumerate_import_methods" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of imported module methods (such as re.compile) inside
+<em>tokens</em>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.analyze.enumerate_imports">
+<tt class="descclassname">pyminifier.analyze.</tt><tt class="descname">enumerate_imports</tt><big>(</big><em>tokens</em><big>)</big><a class="reference internal" href="_modules/pyminifier/analyze.html#enumerate_imports"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.analyze.enumerate_imports" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterates over <em>tokens</em> and returns a list of all imported modules.</p>
+<p><strong>Note:</strong> This is intelligent about the use of the &#8216;as&#8217; keyword.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.analyze.enumerate_keyword_args">
+<tt class="descclassname">pyminifier.analyze.</tt><tt class="descname">enumerate_keyword_args</tt><big>(</big><em>tokens</em><big>)</big><a class="reference internal" href="_modules/pyminifier/analyze.html#enumerate_keyword_args"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.analyze.enumerate_keyword_args" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterates over <em>tokens</em> and returns a dictionary with function names as the
+keys and lists of keyword arguments as the values.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.analyze.enumerate_local_modules">
+<tt class="descclassname">pyminifier.analyze.</tt><tt class="descname">enumerate_local_modules</tt><big>(</big><em>tokens</em>, <em>path</em><big>)</big><a class="reference internal" href="_modules/pyminifier/analyze.html#enumerate_local_modules"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.analyze.enumerate_local_modules" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of modules inside <em>tokens</em> that are local to <em>path</em>.</p>
+<p><strong>Note:</strong>  Will recursively look inside <em>path</em> for said modules.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.analyze.enumerate_method_calls">
+<tt class="descclassname">pyminifier.analyze.</tt><tt class="descname">enumerate_method_calls</tt><big>(</big><em>tokens</em>, <em>modules</em><big>)</big><a class="reference internal" href="_modules/pyminifier/analyze.html#enumerate_method_calls"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.analyze.enumerate_method_calls" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of all object (not module) method calls in the given tokens.</p>
+<p><em>modules</em> is expected to be a list of all global modules imported into the
+source code we&#8217;re working on.</p>
+<dl class="docutils">
+<dt>For example:</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">enumerate_method_calls</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+<span class="go">[&#39;re.compile&#39;, &#39;sys.argv&#39;, &#39;f.write&#39;]</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyminifier.analyze.get_shebang">
+<tt class="descclassname">pyminifier.analyze.</tt><tt class="descname">get_shebang</tt><big>(</big><em>tokens</em><big>)</big><a class="reference internal" href="_modules/pyminifier/analyze.html#get_shebang"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.analyze.get_shebang" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the shebang string in <em>tokens</em> if it exists.  None if not.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="compression.html" class="btn btn-neutral float-right" title="compression.py - For compressing Python code">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="pyminifier.html" class="btn btn-neutral" title="pyminifier.py - The main module for minifying, obfuscating, and compressing Python code"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Dan McDougall.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'2.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

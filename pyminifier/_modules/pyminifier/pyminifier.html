@@ -1,0 +1,587 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>pyminifier.pyminifier &mdash; pyminifier 2.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="pyminifier 2.0 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="../../index.html" class="fa fa-home"> pyminifier</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../pyminifier.html"><tt class="docutils literal"><span class="pre">pyminifier.py</span></tt> - The main module for minifying, obfuscating, and compressing Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../analyze.html"><tt class="docutils literal"><span class="pre">analyze.py</span></tt> - For analyzing Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../compression.html"><tt class="docutils literal"><span class="pre">compression.py</span></tt> - For compressing Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../minification.html"><tt class="docutils literal"><span class="pre">minification.py</span></tt> - For minifying Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../obfuscate.html"><tt class="docutils literal"><span class="pre">obfuscate.py</span></tt> - For obfuscating Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../token_utils.html"><tt class="docutils literal"><span class="pre">token_utils.py</span></tt> - A collection of token-related functions</a></li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">pyminifier</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>pyminifier.pyminifier</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <h1>Source code for pyminifier.pyminifier</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python</span>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="c">#</span>
+<span class="c">#       Copyright 2014 Dan McDougall &lt;daniel.mcdougall@liftoffsoftware.com&gt;</span>
+<span class="c">#</span>
+
+<span class="c"># Meta</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s">&#39;2.0&#39;</span>
+<span class="n">__license__</span> <span class="o">=</span> <span class="s">&quot;GPLv3&quot;</span> <span class="c"># see LICENSE.txt</span>
+<span class="n">__version_info__</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">__author__</span> <span class="o">=</span> <span class="s">&#39;Dan McDougall &lt;daniel.mcdougall@liftoffsoftware.com&gt;&#39;</span>
+
+<span class="c"># TODO: Add the ability to mark variables, functions, classes, and methods for non-obfuscation.</span>
+<span class="c"># TODO: Add the ability to selectively obfuscate identifiers inside strings (for metaprogramming stuff).</span>
+<span class="c"># TODO: Add the ability to use a config file instead of just command line args.</span>
+<span class="c"># TODO: Add the ability to save a file that allows for de-obfuscation later (or at least the ability to debug).</span>
+<span class="c"># TODO: Separate out the individual functions of minification so that they can be chosen selectively like the obfuscation functions.</span>
+
+<span class="n">__doc__</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s">**Python Minifier:**  Reduces the size of (minifies) Python code for use on</span>
+<span class="s">embedded platforms.</span>
+
+<span class="s">Performs the following:</span>
+
+<span class="s">    * Removes docstrings.</span>
+<span class="s">    * Removes comments.</span>
+<span class="s">    * Minimizes code indentation.</span>
+<span class="s">    * Joins multiline pairs of parentheses, braces, and brackets (and removes extraneous whitespace within).</span>
+<span class="s">    * Preserves shebangs and encoding info (e.g. &quot;# -- coding: utf-8 --&quot;).</span>
+<span class="s">    * Optionally, produces a bzip2 or gzip-compressed self-extracting python script containing the minified source for ultimate minification. *Added in version 1.4*</span>
+<span class="s">    * Optionally, obfuscates the code using the shortest possible combination of letters and numbers for one or all of class names, function/method names, and variables. The options are ``--obfuscate`` or ``-O`` to obfuscate everything, ``--obfuscate-variables``, ``--obfuscate-functions``, and ``--obfuscate-classes`` to obfuscate things individually (say, if you wanted to keep your module usable by external programs).  *Added in version 2.0*</span>
+<span class="s">    * Optionally, a value may be specified via --replacement-length to set the minimum length of random strings that are used to replace identifier names when obfuscating.</span>
+<span class="s">    * Optionally, if using Python 3, you may specify ``--nonlatin`` to use funky unicode characters when obfuscating. WARNING: This will result in some seriously hard-to-read code! **Tip:** Combine this setting with higher ``--replacement-length`` values to make the output even wackier.  *Added in version 2.0*</span>
+<span class="s">    * Pyminifier can now minify/obfuscate an arbitrary number of Python scripts in one go.  For example, ``./pyminifier.py -O *.py`` will minify and obfuscate all files in the current directory ending in .py.  To prevent issues with using differentiated obfuscated identifiers across multiple files, pyminifier will keep track of what replaces what via a lookup table to ensure foo_module.whatever is gets the same replacement across all source files.  *Added in version 2.0*</span>
+<span class="s">    * Optionally, creates an executable zip archive (pyz) containing the minified/obfuscated source script and all implicit (local path) imported modules.  This mechanism automatically figures out which source files to include in the .pyz archive by analyzing the script passed to pyminifier on the command line (listing all the modules your script uses is unnecessary).  This is also the **ultimate** in minification/compression besting both the gzip and bzip2 compression mechanisms with the disadvantage that .pyz files cannot be imported into other Python scripts.  *Added in version 2.0*</span>
+
+<span class="s">Just how much space can be saved by pyminifier?  Here&#39;s a comparison:</span>
+
+<span class="s">    * The pyminifier source (all six files) takes up about 164k.</span>
+<span class="s">    * Performing basic minification on all pyminifier source files reduces that to ~104k.</span>
+<span class="s">    * Minification plus obfuscation provides a further reduction to 92k.</span>
+<span class="s">    * Minification plus the base64-encoded gzip trick (--gzip) reduces it to 76k.</span>
+<span class="s">    * Minification plus gzip compression plus obfuscation is also 76k (demonstrating that obfuscation makes no difference when compression algorthms are used).</span>
+<span class="s">    * Using the --pyz option on pyminifier.py creates a ~14k .pyz file that includes all the aforementioned files.</span>
+
+<span class="s">Various examples and edge cases are sprinkled throughout the pyminifier code so</span>
+<span class="s">that it can be tested by minifying itself.  The way to test is thus:</span>
+
+<span class="s">.. code-block:: bash</span>
+
+<span class="s">    $ python pyminifier.py pyminifier.py &gt; minified_pyminifier.py</span>
+<span class="s">    $ python minified_pyminifier.py pyminifier.py &gt; this_should_be_identical.py</span>
+<span class="s">    $ diff minified_pyminifier.py this_should_be_identical.py</span>
+<span class="s">    $</span>
+
+<span class="s">If you get an error executing minified_pyminifier.py or</span>
+<span class="s">``this_should_be_identical.py`` isn&#39;t identical to minified_pyminifier.py then</span>
+<span class="s">something is broken.</span>
+
+<span class="s">.. note::</span>
+
+<span class="s">    The test functions below are meaningless.  They only serve as test/edge</span>
+<span class="s">    cases for testing pyminifier.</span>
+<span class="s">&quot;&quot;&quot;</span>
+
+<span class="c"># Import built-in modules</span>
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">optparse</span> <span class="kn">import</span> <span class="n">OptionParser</span>
+
+<span class="c"># Import our own modules</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">minification</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">token_utils</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">obfuscate</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">compression</span>
+
+<span class="n">py3</span> <span class="o">=</span> <span class="bp">False</span>
+<span class="n">lzma</span> <span class="o">=</span> <span class="bp">False</span>
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">major</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+    <span class="n">py3</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">lzma</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+<span class="c"># Regexes</span>
+<span class="n">multiline_indicator</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\\\\</span><span class="s">(\s*#.*)?</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+
+<span class="c"># The test.+() functions below are for testing pyminifier...</span>
+<div class="viewcode-block" id="test_decorator"><a class="viewcode-back" href="../../pyminifier.html#pyminifier.pyminifier.test_decorator">[docs]</a><span class="k">def</span> <span class="nf">test_decorator</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Decorator that does nothing&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">f</span>
+</div>
+<div class="viewcode-block" id="test_reduce_operators"><a class="viewcode-back" href="../../pyminifier.html#pyminifier.pyminifier.test_reduce_operators">[docs]</a><span class="k">def</span> <span class="nf">test_reduce_operators</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Test the case where an operator such as an open paren starts a line&quot;&quot;&quot;</span>
+    <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span> <span class="c"># The indentation level should be preserved</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="test_empty_functions"><a class="viewcode-back" href="../../pyminifier.html#pyminifier.pyminifier.test_empty_functions">[docs]</a><span class="k">def</span> <span class="nf">test_empty_functions</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This is a test function.</span>
+<span class="sd">    This should be replaced with &#39;def test_empty_functions(): pass&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+</div>
+<div class="viewcode-block" id="test_class"><a class="viewcode-back" href="../../pyminifier.html#pyminifier.pyminifier.test_class">[docs]</a><span class="k">class</span> <span class="nc">test_class</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="s">&quot;Testing indented decorators&quot;</span>
+
+    <span class="nd">@test_decorator</span>
+    <span class="k">def</span> <span class="nf">test_function</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="test_function"><a class="viewcode-back" href="../../pyminifier.html#pyminifier.pyminifier.test_function">[docs]</a><span class="k">def</span> <span class="nf">test_function</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function encapsulates the edge cases to prevent them from invading the</span>
+<span class="sd">    global namespace.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># This tests method obfuscation:</span>
+    <span class="n">method_obfuscate</span> <span class="o">=</span> <span class="n">test_class</span><span class="p">()</span>
+    <span class="n">method_obfuscate</span><span class="o">.</span><span class="n">test_function</span><span class="p">()</span>
+    <span class="n">foo</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;The # character in this string should &quot;</span> <span class="c"># This comment</span>
+           <span class="s">&quot;not result in a syntax error&quot;</span><span class="p">)</span> <span class="c"># ...and this one should go away</span>
+    <span class="n">test_multi_line_list</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s">&#39;item1&#39;</span><span class="p">,</span>
+        <span class="s">&#39;item2&#39;</span><span class="p">,</span>
+        <span class="s">&#39;item3&#39;</span>
+    <span class="p">]</span>
+    <span class="n">test_multi_line_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">&#39;item1&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s">&#39;item2&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="s">&#39;item3&#39;</span><span class="p">:</span> <span class="mi">3</span>
+    <span class="p">}</span>
+    <span class="c"># It may seem strange but the code below tests our docstring removal code.</span>
+    <span class="n">test_string_inside_operators</span> <span class="o">=</span> <span class="n">imaginary_function</span><span class="p">(</span>
+        <span class="s">&quot;This string was indented but the tokenizer won&#39;t see it that way.&quot;</span>
+    <span class="p">)</span> <span class="c"># To understand how this could mess up docstring removal code see the</span>
+      <span class="c"># minification.minification.remove_comments_and_docstrings() function starting at this line:</span>
+      <span class="c">#     &quot;elif token_type == tokenize.STRING:&quot;</span>
+    <span class="c"># This tests remove_extraneous_spaces():</span>
+    <span class="n">this_line_has_leading_indentation</span>    <span class="o">=</span> <span class="s">&#39;&#39;&#39;&lt;--That extraneous space should be</span>
+<span class="s">                                              removed&#39;&#39;&#39;</span> <span class="c"># But not these spaces</span>
+</div>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="k">global</span> <span class="n">name_generator</span>
+    <span class="n">usage</span> <span class="o">=</span> <span class="s">&#39;%prog [options] &quot;&lt;input file&gt;&quot;&#39;</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">OptionParser</span><span class="p">(</span><span class="n">usage</span><span class="o">=</span><span class="n">usage</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="n">__version__</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">disable_interspersed_args</span><span class="p">()</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&quot;-o&quot;</span><span class="p">,</span> <span class="s">&quot;--outfile&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&quot;outfile&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s">&quot;Save output to the given file.&quot;</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s">&quot;&lt;file path&gt;&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&quot;-d&quot;</span><span class="p">,</span> <span class="s">&quot;--destdir&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&quot;destdir&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s">&quot;./minified&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;Save output to the given directory. &quot;</span>
+              <span class="s">&quot;This option is required when handling multiple files. &quot;</span>
+              <span class="s">&quot;Defaults to &#39;./minified&#39; and will be created if not present. &quot;</span><span class="p">),</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s">&quot;&lt;file path&gt;&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&quot;--nominify&quot;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&quot;nominify&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s">&quot;Don&#39;t bother minifying (only used with --pyz).&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&quot;--use-tabs&quot;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&quot;tabs&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s">&quot;Use tabs for indentation instead of spaces.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&quot;--bzip2&quot;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&quot;bzip2&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;bzip2-compress the result into a self-executing python script.  &quot;</span>
+              <span class="s">&quot;Only works on stand-alone scripts without implicit imports.&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&quot;--gzip&quot;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&quot;gzip&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;gzip-compress the result into a self-executing python script.  &quot;</span>
+             <span class="s">&quot;Only works on stand-alone scripts without implicit imports.&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">lzma</span><span class="p">:</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+            <span class="s">&quot;--lzma&quot;</span><span class="p">,</span>
+            <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_true&quot;</span><span class="p">,</span>
+            <span class="n">dest</span><span class="o">=</span><span class="s">&quot;lzma&quot;</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;lzma-compress the result into a self-executing python script.  &quot;</span>
+                <span class="s">&quot;Only works on stand-alone scripts without implicit imports.&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&quot;--pyz&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&quot;pyz&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;zip-compress the result into a self-executing python script. &quot;</span>
+              <span class="s">&quot;This will create a new file that includes any necessary implicit&quot;</span>
+              <span class="s">&quot; (local to the script) modules.  Will include/process all files &quot;</span>
+              <span class="s">&quot;given as arguments to pyminifier.py on the command line.&quot;</span><span class="p">),</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s">&quot;&lt;name of archive&gt;.pyz&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&quot;-O&quot;</span><span class="p">,</span> <span class="s">&quot;--obfuscate&quot;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&quot;obfuscate&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s">&quot;Obfuscate all function/method names, variables, and classes.  &quot;</span>
+            <span class="s">&quot;Default is to NOT obfuscate.&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&quot;--obfuscate-classes&quot;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&quot;obf_classes&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s">&quot;Obfuscate class names.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&quot;--obfuscate-functions&quot;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&quot;obf_functions&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s">&quot;Obfuscate function and method names.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&quot;--obfuscate-variables&quot;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&quot;obf_variables&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s">&quot;Obfuscate variable names.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&quot;--obfuscate-import-methods&quot;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&quot;obf_import_methods&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s">&quot;Obfuscate globally-imported mouled methods (e.g. &#39;Ag=re.compile&#39;).&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&quot;--obfuscate-builtins&quot;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&quot;obf_builtins&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s">&quot;Obfuscate built-ins (i.e. True, False, object, Exception, etc).&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&quot;--replacement-length&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&quot;replacement_length&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s">&quot;The length of the random names that will be used when obfuscating &quot;</span>
+            <span class="s">&quot;identifiers.&quot;</span>
+        <span class="p">),</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s">&quot;1&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&quot;--nonlatin&quot;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&quot;use_nonlatin&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s">&quot;Use non-latin (unicode) characters in obfuscation (Python 3 only).&quot;</span>
+            <span class="s">&quot;  WARNING: This results in some SERIOUSLY hard-to-read code.&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&quot;--prepend&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&quot;prepend&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s">&quot;Prepend the text in this file to the top of our output.  &quot;</span>
+            <span class="s">&quot;e.g. A copyright notice.&quot;</span>
+        <span class="p">),</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s">&quot;&lt;file path&gt;&quot;</span>
+    <span class="p">)</span>
+    <span class="n">options</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">pyz_file</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span> <span class="c"># Note: This syntax requires Python 2.6+</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">err</span><span class="p">)</span> <span class="c"># Just in case it is something wierd</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">print_help</span><span class="p">()</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">pyz</span><span class="p">:</span>
+        <span class="c"># Check to make sure we were only passed one script (only one at a time)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;ERROR: The --pyz option only works with one python file at &quot;</span>
+                  <span class="s">&quot;a time.&quot;</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;(Dependencies will be automagically included in the &quot;</span>
+                  <span class="s">&quot;resulting .pyz)&quot;</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c"># Make our .pyz:</span>
+        <span class="n">compression</span><span class="o">.</span><span class="n">zip_pack</span><span class="p">(</span><span class="n">pyz_file</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">None</span> <span class="c"># Make sure we don&#39;t do anything else</span>
+    <span class="c"># Read in our prepend text (if any)</span>
+    <span class="n">prepend</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">prepend</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">prepend</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">prepend</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;Error reading </span><span class="si">%s</span><span class="s">:&quot;</span> <span class="o">%</span> <span class="n">options</span><span class="o">.</span><span class="n">prepend</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span> <span class="c"># We&#39;re dealing with more than one file</span>
+        <span class="n">name_generator</span> <span class="o">=</span> <span class="bp">None</span> <span class="c"># So we can tell if we need to obfuscate</span>
+        <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">obfuscate</span> <span class="ow">or</span> <span class="n">options</span><span class="o">.</span><span class="n">obf_classes</span> \
+           <span class="ow">or</span> <span class="n">options</span><span class="o">.</span><span class="n">obf_functions</span> <span class="ow">or</span> <span class="n">options</span><span class="o">.</span><span class="n">obf_variables</span> \
+           <span class="ow">or</span> <span class="n">options</span><span class="o">.</span><span class="n">obf_builtins</span> <span class="ow">or</span> <span class="n">options</span><span class="o">.</span><span class="n">obf_import_methods</span><span class="p">:</span>
+            <span class="c"># Put together that will be used for all obfuscation functions:</span>
+            <span class="n">identifier_length</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">replacement_length</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">use_nonlatin</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                    <span class="n">name_generator</span> <span class="o">=</span> <span class="n">obfuscate</span><span class="o">.</span><span class="n">obfuscation_machine</span><span class="p">(</span>
+                        <span class="n">use_unicode</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="n">identifier_length</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">print</span><span class="p">(</span>
+                    <span class="s">&quot;ERROR: You can&#39;t use nonlatin characters without Python 3&quot;</span><span class="p">)</span>
+                    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">name_generator</span> <span class="o">=</span> <span class="n">obfuscate</span><span class="o">.</span><span class="n">obfuscation_machine</span><span class="p">(</span>
+                    <span class="n">count</span><span class="o">=</span><span class="n">identifier_length</span><span class="p">)</span>
+            <span class="n">table</span> <span class="o">=</span><span class="p">[{}]</span>
+        <span class="n">cumulative_size</span> <span class="o">=</span> <span class="mi">0</span> <span class="c"># For size reduction stats</span>
+        <span class="n">cumulative_new</span> <span class="o">=</span> <span class="mi">0</span> <span class="c"># Ditto</span>
+        <span class="k">for</span> <span class="n">sourcefile</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="c"># Record how big the file is so we can compare afterwards</span>
+            <span class="n">filesize</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">sourcefile</span><span class="p">)</span>
+            <span class="n">cumulative_size</span> <span class="o">+=</span> <span class="n">filesize</span>
+            <span class="c"># Get the module name from the path</span>
+            <span class="n">module</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">sourcefile</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">module</span> <span class="o">=</span> <span class="s">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">source</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">sourcefile</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="n">tokens</span> <span class="o">=</span> <span class="n">token_utils</span><span class="o">.</span><span class="n">listified_tokenizer</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">nominify</span><span class="p">:</span> <span class="c"># Perform minification</span>
+                <span class="n">source</span> <span class="o">=</span> <span class="n">minification</span><span class="o">.</span><span class="n">minify</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+            <span class="c"># Have to re-tokenize for obfucation (it is quick):</span>
+            <span class="n">tokens</span> <span class="o">=</span> <span class="n">token_utils</span><span class="o">.</span><span class="n">listified_tokenizer</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+            <span class="c"># Perform obfuscation if any of the related options were set</span>
+            <span class="k">if</span> <span class="n">name_generator</span><span class="p">:</span>
+                <span class="n">obfuscate</span><span class="o">.</span><span class="n">obfuscate</span><span class="p">(</span>
+                    <span class="n">module</span><span class="p">,</span>
+                    <span class="n">tokens</span><span class="p">,</span>
+                    <span class="n">options</span><span class="p">,</span>
+                    <span class="n">name_generator</span><span class="o">=</span><span class="n">name_generator</span><span class="p">,</span>
+                    <span class="n">table</span><span class="o">=</span><span class="n">table</span>
+                <span class="p">)</span>
+            <span class="c"># Convert back to text</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">token_utils</span><span class="o">.</span><span class="n">untokenize</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+            <span class="c"># Compress it if we were asked to do so</span>
+            <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">bzip2</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">compression</span><span class="o">.</span><span class="n">bz2_pack</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">options</span><span class="o">.</span><span class="n">gzip</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">compression</span><span class="o">.</span><span class="n">gz_pack</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">lzma</span> <span class="ow">and</span> <span class="n">options</span><span class="o">.</span><span class="n">lzma</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">compression</span><span class="o">.</span><span class="n">lzma_pack</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">+=</span> <span class="p">(</span>
+                <span class="s">&quot;# Created by pyminifier &quot;</span>
+                <span class="s">&quot;(https://github.com/liftoff/pyminifier)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+            <span class="c"># Either save the result to the output file or print it to stdout</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">destdir</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">destdir</span><span class="p">)</span>
+            <span class="c"># Need the path where the script lives for the next steps:</span>
+            <span class="n">filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">sourcefile</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">destdir</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">filepath</span> <span class="c"># Put everything in destdir</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">new_filesize</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="n">cumulative_new</span> <span class="o">+=</span> <span class="n">new_filesize</span>
+            <span class="n">percent_saved</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span>
+                <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">new_filesize</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">filesize</span><span class="p">))</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> (</span><span class="si">%s</span><span class="s">) reduced to </span><span class="si">%s</span><span class="s"> bytes (</span><span class="si">%s%%</span><span class="s"> of original size)&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="n">sourcefile</span><span class="p">,</span> <span class="n">filesize</span><span class="p">,</span> <span class="n">new_filesize</span><span class="p">,</span> <span class="n">percent_saved</span><span class="p">))</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;Overall size reduction: </span><span class="si">%s%%</span><span class="s"> of original size&quot;</span> <span class="o">%</span>
+            <span class="nb">round</span><span class="p">((</span><span class="nb">float</span><span class="p">(</span><span class="n">cumulative_new</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">cumulative_size</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">),</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c"># Get the module name from the path</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="s">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">filesize</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="c"># Convert the tokens from a tuple of tuples to a list of lists so we can</span>
+        <span class="c"># update in-place.</span>
+        <span class="n">tokens</span> <span class="o">=</span> <span class="n">token_utils</span><span class="o">.</span><span class="n">listified_tokenizer</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">nominify</span><span class="p">:</span> <span class="c"># Perform minification</span>
+            <span class="n">source</span> <span class="o">=</span> <span class="n">minification</span><span class="o">.</span><span class="n">minify</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+            <span class="c"># Convert back to tokens in case we&#39;re obfuscating</span>
+            <span class="n">tokens</span> <span class="o">=</span> <span class="n">token_utils</span><span class="o">.</span><span class="n">listified_tokenizer</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+        <span class="c"># Perform obfuscation if any of the related options were set</span>
+        <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">obfuscate</span> <span class="ow">or</span> <span class="n">options</span><span class="o">.</span><span class="n">obf_classes</span> <span class="ow">or</span> <span class="n">options</span><span class="o">.</span><span class="n">obf_functions</span> \
+           <span class="ow">or</span> <span class="n">options</span><span class="o">.</span><span class="n">obf_variables</span> <span class="ow">or</span> <span class="n">options</span><span class="o">.</span><span class="n">obf_builtins</span> \
+           <span class="ow">or</span> <span class="n">options</span><span class="o">.</span><span class="n">obf_import_methods</span><span class="p">:</span>
+            <span class="n">identifier_length</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">replacement_length</span><span class="p">)</span>
+            <span class="n">name_generator</span> <span class="o">=</span> <span class="n">obfuscate</span><span class="o">.</span><span class="n">obfuscation_machine</span><span class="p">(</span>
+                <span class="n">count</span><span class="o">=</span><span class="n">identifier_length</span><span class="p">)</span>
+            <span class="n">obfuscate</span><span class="o">.</span><span class="n">obfuscate</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+        <span class="c"># Convert back to text</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">token_utils</span><span class="o">.</span><span class="n">untokenize</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+        <span class="c"># Compress it if we were asked to do so</span>
+        <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">bzip2</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">compression</span><span class="o">.</span><span class="n">bz2_pack</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">options</span><span class="o">.</span><span class="n">gzip</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">compression</span><span class="o">.</span><span class="n">gz_pack</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">lzma</span> <span class="ow">and</span> <span class="n">options</span><span class="o">.</span><span class="n">lzma</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">compression</span><span class="o">.</span><span class="n">lzma_pack</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s"># Created by pyminifier.py</span><span class="se">\n</span><span class="s">&quot;</span>
+        <span class="c"># Either save the result to the output file or print it to stdout</span>
+        <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">outfile</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">outfile</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">new_filesize</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">outfile</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> (</span><span class="si">%s</span><span class="s">) reduced to </span><span class="si">%s</span><span class="s"> bytes (</span><span class="si">%s%%</span><span class="s"> of original size)&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">filesize</span><span class="p">,</span> <span class="n">new_filesize</span><span class="p">,</span>
+                <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">new_filesize</span><span class="p">)</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">filesize</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Dan McDougall.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'2.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

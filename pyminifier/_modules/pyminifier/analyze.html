@@ -1,0 +1,571 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>pyminifier.analyze &mdash; pyminifier 2.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="pyminifier 2.0 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="../../index.html" class="fa fa-home"> pyminifier</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../pyminifier.html"><tt class="docutils literal"><span class="pre">pyminifier.py</span></tt> - The main module for minifying, obfuscating, and compressing Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../analyze.html"><tt class="docutils literal"><span class="pre">analyze.py</span></tt> - For analyzing Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../compression.html"><tt class="docutils literal"><span class="pre">compression.py</span></tt> - For compressing Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../minification.html"><tt class="docutils literal"><span class="pre">minification.py</span></tt> - For minifying Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../obfuscate.html"><tt class="docutils literal"><span class="pre">obfuscate.py</span></tt> - For obfuscating Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../token_utils.html"><tt class="docutils literal"><span class="pre">token_utils.py</span></tt> - A collection of token-related functions</a></li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">pyminifier</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>pyminifier.analyze</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <h1>Source code for pyminifier.analyze</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+
+<span class="n">__doc__</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s">A module of useful functions for analyzing Python code.</span>
+<span class="s">&quot;&quot;&quot;</span>
+
+<span class="c"># Import builtins</span>
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">re</span><span class="o">,</span> <span class="nn">tokenize</span><span class="o">,</span> <span class="nn">keyword</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">cStringIO</span> <span class="kn">as</span> <span class="nn">io</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span> <span class="c"># Ahh, Python 3</span>
+    <span class="kn">import</span> <span class="nn">io</span>
+
+<span class="c"># Globals</span>
+<span class="n">py3</span> <span class="o">=</span> <span class="bp">False</span>
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">major</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+    <span class="n">py3</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="n">shebang</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&#39;^#\!.*$&#39;</span><span class="p">)</span>
+<span class="n">encoding</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&quot;.*coding[:=]\s*([-\w.]+)&quot;</span><span class="p">)</span>
+<span class="c"># __builtins__ is different for every module so we need a hard-coded list:</span>
+<span class="n">builtins</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s">&#39;ArithmeticError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;AssertionError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;AttributeError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;BaseException&#39;</span><span class="p">,</span>
+    <span class="s">&#39;BufferError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;BytesWarning&#39;</span><span class="p">,</span>
+    <span class="s">&#39;DeprecationWarning&#39;</span><span class="p">,</span>
+    <span class="s">&#39;EOFError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;Ellipsis&#39;</span><span class="p">,</span>
+    <span class="s">&#39;EnvironmentError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;Exception&#39;</span><span class="p">,</span>
+    <span class="s">&#39;False&#39;</span><span class="p">,</span>
+    <span class="s">&#39;FloatingPointError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;FutureWarning&#39;</span><span class="p">,</span>
+    <span class="s">&#39;GeneratorExit&#39;</span><span class="p">,</span>
+    <span class="s">&#39;IOError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;ImportError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;ImportWarning&#39;</span><span class="p">,</span>
+    <span class="s">&#39;IndentationError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;IndexError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;KeyError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;KeyboardInterrupt&#39;</span><span class="p">,</span>
+    <span class="s">&#39;LookupError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;MemoryError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;NameError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;None&#39;</span><span class="p">,</span>
+    <span class="s">&#39;NotImplemented&#39;</span><span class="p">,</span>
+    <span class="s">&#39;NotImplementedError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;OSError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;OverflowError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;PendingDeprecationWarning&#39;</span><span class="p">,</span>
+    <span class="s">&#39;ReferenceError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;RuntimeError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;RuntimeWarning&#39;</span><span class="p">,</span>
+    <span class="s">&#39;StandardError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;StopIteration&#39;</span><span class="p">,</span>
+    <span class="s">&#39;SyntaxError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;SyntaxWarning&#39;</span><span class="p">,</span>
+    <span class="s">&#39;SystemError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;SystemExit&#39;</span><span class="p">,</span>
+    <span class="s">&#39;TabError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;True&#39;</span><span class="p">,</span>
+    <span class="s">&#39;TypeError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;UnboundLocalError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;UnicodeDecodeError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;UnicodeEncodeError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;UnicodeError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;UnicodeTranslateError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;UnicodeWarning&#39;</span><span class="p">,</span>
+    <span class="s">&#39;UserWarning&#39;</span><span class="p">,</span>
+    <span class="s">&#39;ValueError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;Warning&#39;</span><span class="p">,</span>
+    <span class="s">&#39;ZeroDivisionError&#39;</span><span class="p">,</span>
+    <span class="s">&#39;__IPYTHON__&#39;</span><span class="p">,</span>
+    <span class="s">&#39;__IPYTHON__active&#39;</span><span class="p">,</span>
+    <span class="s">&#39;__debug__&#39;</span><span class="p">,</span>
+    <span class="s">&#39;__doc__&#39;</span><span class="p">,</span>
+    <span class="s">&#39;__import__&#39;</span><span class="p">,</span>
+    <span class="s">&#39;__name__&#39;</span><span class="p">,</span>
+    <span class="s">&#39;__package__&#39;</span><span class="p">,</span>
+    <span class="s">&#39;abs&#39;</span><span class="p">,</span>
+    <span class="s">&#39;all&#39;</span><span class="p">,</span>
+    <span class="s">&#39;any&#39;</span><span class="p">,</span>
+    <span class="s">&#39;apply&#39;</span><span class="p">,</span>
+    <span class="s">&#39;basestring&#39;</span><span class="p">,</span>
+    <span class="s">&#39;bin&#39;</span><span class="p">,</span>
+    <span class="s">&#39;bool&#39;</span><span class="p">,</span>
+    <span class="s">&#39;buffer&#39;</span><span class="p">,</span>
+    <span class="s">&#39;bytearray&#39;</span><span class="p">,</span>
+    <span class="s">&#39;bytes&#39;</span><span class="p">,</span>
+    <span class="s">&#39;callable&#39;</span><span class="p">,</span>
+    <span class="s">&#39;chr&#39;</span><span class="p">,</span>
+    <span class="s">&#39;classmethod&#39;</span><span class="p">,</span>
+    <span class="s">&#39;cmp&#39;</span><span class="p">,</span>
+    <span class="s">&#39;coerce&#39;</span><span class="p">,</span>
+    <span class="s">&#39;compile&#39;</span><span class="p">,</span>
+    <span class="s">&#39;complex&#39;</span><span class="p">,</span>
+    <span class="s">&#39;copyright&#39;</span><span class="p">,</span>
+    <span class="s">&#39;credits&#39;</span><span class="p">,</span>
+    <span class="s">&#39;delattr&#39;</span><span class="p">,</span>
+    <span class="s">&#39;dict&#39;</span><span class="p">,</span>
+    <span class="s">&#39;dir&#39;</span><span class="p">,</span>
+    <span class="s">&#39;divmod&#39;</span><span class="p">,</span>
+    <span class="s">&#39;dreload&#39;</span><span class="p">,</span>
+    <span class="s">&#39;enumerate&#39;</span><span class="p">,</span>
+    <span class="s">&#39;eval&#39;</span><span class="p">,</span>
+    <span class="s">&#39;execfile&#39;</span><span class="p">,</span>
+    <span class="s">&#39;exit&#39;</span><span class="p">,</span>
+    <span class="s">&#39;file&#39;</span><span class="p">,</span>
+    <span class="s">&#39;filter&#39;</span><span class="p">,</span>
+    <span class="s">&#39;float&#39;</span><span class="p">,</span>
+    <span class="s">&#39;format&#39;</span><span class="p">,</span>
+    <span class="s">&#39;frozenset&#39;</span><span class="p">,</span>
+    <span class="s">&#39;getattr&#39;</span><span class="p">,</span>
+    <span class="s">&#39;globals&#39;</span><span class="p">,</span>
+    <span class="s">&#39;hasattr&#39;</span><span class="p">,</span>
+    <span class="s">&#39;hash&#39;</span><span class="p">,</span>
+    <span class="s">&#39;help&#39;</span><span class="p">,</span>
+    <span class="s">&#39;hex&#39;</span><span class="p">,</span>
+    <span class="s">&#39;id&#39;</span><span class="p">,</span>
+    <span class="s">&#39;input&#39;</span><span class="p">,</span>
+    <span class="s">&#39;int&#39;</span><span class="p">,</span>
+    <span class="s">&#39;intern&#39;</span><span class="p">,</span>
+    <span class="s">&#39;ip_set_hook&#39;</span><span class="p">,</span>
+    <span class="s">&#39;ipalias&#39;</span><span class="p">,</span>
+    <span class="s">&#39;ipmagic&#39;</span><span class="p">,</span>
+    <span class="s">&#39;ipsystem&#39;</span><span class="p">,</span>
+    <span class="s">&#39;isinstance&#39;</span><span class="p">,</span>
+    <span class="s">&#39;issubclass&#39;</span><span class="p">,</span>
+    <span class="s">&#39;iter&#39;</span><span class="p">,</span>
+    <span class="s">&#39;jobs&#39;</span><span class="p">,</span>
+    <span class="s">&#39;len&#39;</span><span class="p">,</span>
+    <span class="s">&#39;license&#39;</span><span class="p">,</span>
+    <span class="s">&#39;list&#39;</span><span class="p">,</span>
+    <span class="s">&#39;locals&#39;</span><span class="p">,</span>
+    <span class="s">&#39;long&#39;</span><span class="p">,</span>
+    <span class="s">&#39;map&#39;</span><span class="p">,</span>
+    <span class="s">&#39;max&#39;</span><span class="p">,</span>
+    <span class="s">&#39;min&#39;</span><span class="p">,</span>
+    <span class="s">&#39;next&#39;</span><span class="p">,</span>
+    <span class="s">&#39;object&#39;</span><span class="p">,</span>
+    <span class="s">&#39;oct&#39;</span><span class="p">,</span>
+    <span class="s">&#39;open&#39;</span><span class="p">,</span>
+    <span class="s">&#39;ord&#39;</span><span class="p">,</span>
+    <span class="s">&#39;pow&#39;</span><span class="p">,</span>
+    <span class="s">&#39;print&#39;</span><span class="p">,</span>
+    <span class="s">&#39;property&#39;</span><span class="p">,</span>
+    <span class="s">&#39;quit&#39;</span><span class="p">,</span>
+    <span class="s">&#39;range&#39;</span><span class="p">,</span>
+    <span class="s">&#39;raw_input&#39;</span><span class="p">,</span>
+    <span class="s">&#39;reduce&#39;</span><span class="p">,</span>
+    <span class="s">&#39;reload&#39;</span><span class="p">,</span>
+    <span class="s">&#39;repr&#39;</span><span class="p">,</span>
+    <span class="s">&#39;reversed&#39;</span><span class="p">,</span>
+    <span class="s">&#39;round&#39;</span><span class="p">,</span>
+    <span class="s">&#39;set&#39;</span><span class="p">,</span>
+    <span class="s">&#39;setattr&#39;</span><span class="p">,</span>
+    <span class="s">&#39;slice&#39;</span><span class="p">,</span>
+    <span class="s">&#39;sorted&#39;</span><span class="p">,</span>
+    <span class="s">&#39;staticmethod&#39;</span><span class="p">,</span>
+    <span class="s">&#39;str&#39;</span><span class="p">,</span>
+    <span class="s">&#39;sum&#39;</span><span class="p">,</span>
+    <span class="s">&#39;super&#39;</span><span class="p">,</span>
+    <span class="s">&#39;tuple&#39;</span><span class="p">,</span>
+    <span class="s">&#39;type&#39;</span><span class="p">,</span>
+    <span class="s">&#39;unichr&#39;</span><span class="p">,</span>
+    <span class="s">&#39;unicode&#39;</span><span class="p">,</span>
+    <span class="s">&#39;vars&#39;</span><span class="p">,</span>
+    <span class="s">&#39;xrange&#39;</span><span class="p">,</span>
+    <span class="s">&#39;zip&#39;</span>
+<span class="p">]</span>
+
+<span class="n">reserved_words</span> <span class="o">=</span> <span class="n">keyword</span><span class="o">.</span><span class="n">kwlist</span> <span class="o">+</span> <span class="n">builtins</span>
+
+<div class="viewcode-block" id="enumerate_keyword_args"><a class="viewcode-back" href="../../analyze.html#pyminifier.analyze.enumerate_keyword_args">[docs]</a><span class="k">def</span> <span class="nf">enumerate_keyword_args</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Iterates over *tokens* and returns a dictionary with function names as the</span>
+<span class="sd">    keys and lists of keyword arguments as the values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">keyword_args</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">inside_function</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">tok</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+        <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NEWLINE</span><span class="p">:</span>
+            <span class="n">inside_function</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NAME</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">token_string</span> <span class="o">==</span> <span class="s">&quot;def&quot;</span><span class="p">:</span>
+                <span class="n">function_name</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">inside_function</span> <span class="o">=</span> <span class="n">function_name</span>
+                <span class="n">keyword_args</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">function_name</span><span class="p">:</span> <span class="p">[]})</span>
+            <span class="k">elif</span> <span class="n">inside_function</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;=&#39;</span><span class="p">:</span> <span class="c"># keyword argument</span>
+                    <span class="n">keyword_args</span><span class="p">[</span><span class="n">function_name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token_string</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">keyword_args</span>
+</div>
+<div class="viewcode-block" id="enumerate_imports"><a class="viewcode-back" href="../../analyze.html#pyminifier.analyze.enumerate_imports">[docs]</a><span class="k">def</span> <span class="nf">enumerate_imports</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Iterates over *tokens* and returns a list of all imported modules.</span>
+
+<span class="sd">    **Note:** This is intelligent about the use of the &#39;as&#39; keyword.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">imported_modules</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">import_line</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">tok</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+        <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NEWLINE</span><span class="p">:</span>
+            <span class="n">import_line</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">elif</span> <span class="n">token_string</span> <span class="o">==</span> <span class="s">&quot;import&quot;</span><span class="p">:</span>
+            <span class="n">import_line</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">elif</span> <span class="n">import_line</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NAME</span> <span class="ow">and</span> <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;as&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">token_string</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">reserved_words</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">token_string</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">imported_modules</span><span class="p">:</span>
+                        <span class="n">imported_modules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token_string</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">imported_modules</span>
+</div>
+<div class="viewcode-block" id="enumerate_global_imports"><a class="viewcode-back" href="../../analyze.html#pyminifier.analyze.enumerate_global_imports">[docs]</a><span class="k">def</span> <span class="nf">enumerate_global_imports</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns a list of all globally imported modules (skips modules imported</span>
+<span class="sd">    inside of classes, methods, or functions).</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; enumerate_global_modules(tokens)</span>
+<span class="sd">        [&#39;sys&#39;, &#39;os&#39;, &#39;tokenize&#39;, &#39;re&#39;]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">imported_modules</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">import_line</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">parent_module</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+    <span class="n">function_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">indentation</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">tok</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+        <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">INDENT</span><span class="p">:</span>
+            <span class="n">indentation</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">DEDENT</span><span class="p">:</span>
+            <span class="n">indentation</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NEWLINE</span><span class="p">:</span>
+            <span class="n">import_line</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">elif</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NAME</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">token_string</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&quot;def&quot;</span><span class="p">,</span> <span class="s">&quot;class&quot;</span><span class="p">]:</span>
+                <span class="n">function_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">indentation</span> <span class="o">==</span> <span class="n">function_count</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">function_count</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="n">function_count</span> <span class="o">&gt;=</span> <span class="n">indentation</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">token_string</span> <span class="o">==</span> <span class="s">&quot;import&quot;</span><span class="p">:</span>
+                    <span class="n">import_line</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="k">elif</span> <span class="n">import_line</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NAME</span> <span class="ow">and</span> <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;as&#39;</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">token_string</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">reserved_words</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">token_string</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">imported_modules</span><span class="p">:</span>
+                                <span class="k">if</span> <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;.&#39;</span><span class="p">:</span> <span class="c"># module.module</span>
+                                    <span class="n">parent_module</span> <span class="o">=</span> <span class="n">token_string</span> <span class="o">+</span> <span class="s">&#39;.&#39;</span>
+                                <span class="k">else</span><span class="p">:</span>
+                                    <span class="k">if</span> <span class="n">parent_module</span><span class="p">:</span>
+                                        <span class="n">module_string</span> <span class="o">=</span> <span class="n">parent_module</span> <span class="o">+</span> <span class="n">token_string</span>
+                                        <span class="n">imported_modules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module_string</span><span class="p">)</span>
+                                        <span class="n">parent_module</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+                                    <span class="k">else</span><span class="p">:</span>
+                                        <span class="n">imported_modules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token_string</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">imported_modules</span>
+
+<span class="c"># TODO: Finish this (even though it isn&#39;t used):</span></div>
+<div class="viewcode-block" id="enumerate_dynamic_imports"><a class="viewcode-back" href="../../analyze.html#pyminifier.analyze.enumerate_dynamic_imports">[docs]</a><span class="k">def</span> <span class="nf">enumerate_dynamic_imports</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns a dictionary of all dynamically imported modules (those inside of</span>
+<span class="sd">    classes or functions) in the form of {&lt;func or class name&gt;: [&lt;modules&gt;]}</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; enumerate_dynamic_modules(tokens)</span>
+<span class="sd">        {&#39;myfunc&#39;: [&#39;zlib&#39;, &#39;base64&#39;]}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">imported_modules</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">import_line</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">tok</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+        <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NEWLINE</span><span class="p">:</span>
+            <span class="n">import_line</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">elif</span> <span class="n">token_string</span> <span class="o">==</span> <span class="s">&quot;import&quot;</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NEWLINE</span><span class="p">:</span>
+                    <span class="n">import_line</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                <span class="n">import_line</span> <span class="o">=</span> <span class="bp">True</span> <span class="c"># Just means this is the first line</span>
+        <span class="k">elif</span> <span class="n">import_line</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NAME</span> <span class="ow">and</span> <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;as&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">token_string</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">reserved_words</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">token_string</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">imported_modules</span><span class="p">:</span>
+                        <span class="n">imported_modules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token_string</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">imported_modules</span>
+</div>
+<div class="viewcode-block" id="enumerate_method_calls"><a class="viewcode-back" href="../../analyze.html#pyminifier.analyze.enumerate_method_calls">[docs]</a><span class="k">def</span> <span class="nf">enumerate_method_calls</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">modules</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns a list of all object (not module) method calls in the given tokens.</span>
+
+<span class="sd">    *modules* is expected to be a list of all global modules imported into the</span>
+<span class="sd">    source code we&#39;re working on.</span>
+
+<span class="sd">    For example:</span>
+<span class="sd">        &gt;&gt;&gt; enumerate_method_calls(tokens)</span>
+<span class="sd">        [&#39;re.compile&#39;, &#39;sys.argv&#39;, &#39;f.write&#39;]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">tok</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+        <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">token_type</span> <span class="o">==</span> <span class="n">tokenize</span><span class="o">.</span><span class="n">NAME</span><span class="p">:</span>
+            <span class="n">next_tok_string</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">next_tok_string</span> <span class="o">==</span> <span class="s">&#39;(&#39;</span><span class="p">:</span> <span class="c"># Method call</span>
+                <span class="n">prev_tok_string</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+                <span class="c"># Check if we&#39;re attached to an object or module</span>
+                <span class="k">if</span> <span class="n">prev_tok_string</span> <span class="o">==</span> <span class="s">&#39;.&#39;</span><span class="p">:</span> <span class="c"># We&#39;re attached</span>
+                    <span class="n">prev_prev_tok_string</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">-</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">prev_prev_tok_string</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;&quot;&quot;&#39;</span><span class="p">,</span><span class="s">&quot;&#39;&#39;&quot;</span><span class="p">,</span> <span class="s">&#39;]&#39;</span><span class="p">,</span> <span class="s">&#39;)&#39;</span><span class="p">,</span> <span class="s">&#39;}&#39;</span><span class="p">]:</span>
+                        <span class="k">if</span> <span class="n">prev_prev_tok_string</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">modules</span><span class="p">:</span>
+                            <span class="n">to_replace</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                                <span class="n">prev_prev_tok_string</span><span class="p">,</span> <span class="n">token_string</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">to_replace</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+                                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">to_replace</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+</div>
+<div class="viewcode-block" id="enumerate_builtins"><a class="viewcode-back" href="../../analyze.html#pyminifier.analyze.enumerate_builtins">[docs]</a><span class="k">def</span> <span class="nf">enumerate_builtins</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns a list of all the builtins being used in *tokens*.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">tok</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+        <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="c">#if token_type == tokenize.NAME:</span>
+        <span class="k">if</span> <span class="n">token_string</span> <span class="ow">in</span> <span class="n">builtins</span><span class="p">:</span>
+            <span class="c"># Note: I need to test if print can be replaced in Python 3</span>
+            <span class="n">special_special</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;print&#39;</span><span class="p">]</span> <span class="c"># Print is special in Python 2</span>
+            <span class="k">if</span> <span class="n">py3</span><span class="p">:</span>
+                <span class="n">special_special</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="n">token_string</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">special_special</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">token_string</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;__&#39;</span><span class="p">):</span> <span class="c"># Don&#39;t count magic funcs</span>
+                    <span class="k">if</span> <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;.&#39;</span> <span class="ow">and</span> <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;=&#39;</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">token_string</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+                            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token_string</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+</div>
+<div class="viewcode-block" id="enumerate_import_methods"><a class="viewcode-back" href="../../analyze.html#pyminifier.analyze.enumerate_import_methods">[docs]</a><span class="k">def</span> <span class="nf">enumerate_import_methods</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns a list of imported module methods (such as re.compile) inside</span>
+<span class="sd">    *tokens*.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">global_imports</span> <span class="o">=</span> <span class="n">enumerate_global_imports</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">global_imports</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">tok</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">next_tok</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">next_next_tok</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">2</span><span class="p">]</span>
+                <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                    <span class="c"># Pretend it is a newline</span>
+                    <span class="n">next_next_tok</span> <span class="o">=</span> <span class="p">(</span><span class="mi">54</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="s">&#39;#</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span> <span class="c"># Last token, no biggie</span>
+                <span class="c"># Pretend it is a newline here too</span>
+                <span class="n">next_tok</span> <span class="o">=</span> <span class="p">(</span><span class="mi">54</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="s">&#39;#</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+            <span class="n">token_type</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">token_string</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">token_string</span> <span class="o">==</span> <span class="n">item</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">next_tok</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;.&#39;</span><span class="p">:</span> <span class="c"># We&#39;re calling a method</span>
+                    <span class="n">module_method</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">token_string</span><span class="p">,</span> <span class="n">next_next_tok</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">module_method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+                        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module_method</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+</div>
+<div class="viewcode-block" id="enumerate_local_modules"><a class="viewcode-back" href="../../analyze.html#pyminifier.analyze.enumerate_local_modules">[docs]</a><span class="k">def</span> <span class="nf">enumerate_local_modules</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns a list of modules inside *tokens* that are local to *path*.</span>
+
+<span class="sd">    **Note:**  Will recursively look inside *path* for said modules.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># Have to get a list of all modules before we can do anything else</span>
+    <span class="n">modules</span> <span class="o">=</span> <span class="n">enumerate_imports</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+    <span class="n">local_modules</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+    <span class="c"># Now check the local dir for matching modules</span>
+    <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">dirs</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">parent</span><span class="p">:</span>
+            <span class="n">parent</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">root</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;.py&#39;</span><span class="p">):</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="n">f</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span> <span class="c"># Strip .py</span>
+                <span class="n">module_tree</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">parent</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="s">&#39;.&#39;</span><span class="p">)</span>
+                <span class="n">module_tree</span> <span class="o">=</span> <span class="n">module_tree</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">module_tree</span><span class="p">:</span>
+                    <span class="n">module</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">module_tree</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">module</span> <span class="o">=</span> <span class="n">f</span>
+                <span class="k">if</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">modules</span><span class="p">:</span>
+                    <span class="n">local_modules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">local_modules</span>
+</div>
+<div class="viewcode-block" id="get_shebang"><a class="viewcode-back" href="../../analyze.html#pyminifier.analyze.get_shebang">[docs]</a><span class="k">def</span> <span class="nf">get_shebang</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the shebang string in *tokens* if it exists.  None if not.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># This (short) loop preserves shebangs and encoding strings:</span>
+    <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">]:</span> <span class="c"># Will always be in the first four tokens</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">tok</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+        <span class="c"># Save the first comment line if it starts with a shebang</span>
+        <span class="c"># (e.g. &#39;#!/usr/bin/env python&#39;)</span>
+        <span class="k">if</span> <span class="n">shebang</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span> <span class="c"># Must be first line</span>
+            <span class="k">return</span> <span class="n">line</span></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Dan McDougall.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'2.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

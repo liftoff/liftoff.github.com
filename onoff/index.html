@@ -1,0 +1,265 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>onoff.py - Add on(), off(), and trigger() event handling to any Python class &mdash; onoff 1.0.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="onoff 1.0.1 documentation" href="#"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="#" class="fa fa-home"> onoff</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <!-- Local TOC -->
+            <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">onoff.py - Add on(), off(), and trigger() event handling to any Python class</a></li>
+</ul>
+</div>
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="#">onoff</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="#">Docs</a> &raquo;</li>
+      
+    <li>onoff.py - Add on(), off(), and trigger() event handling to any Python class</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/index.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="onoff-py-add-on-off-and-trigger-event-handling-to-any-python-class">
+<h1>onoff.py - Add on(), off(), and trigger() event handling to any Python class<a class="headerlink" href="#onoff-py-add-on-off-and-trigger-event-handling-to-any-python-class" title="Permalink to this headline">¶</a></h1>
+<p><em>Module author: Dan McDougall &lt;<a class="reference external" href="mailto:daniel&#46;mcdougall&#37;&#52;&#48;liftoffsoftware&#46;com">daniel<span>&#46;</span>mcdougall<span>&#64;</span>liftoffsoftware<span>&#46;</span>com</a>&gt;</em></p>
+<span class="target" id="module-onoff"></span><p>onoff.py - A really handy way to add <tt class="docutils literal"><span class="pre">on()</span></tt>, <tt class="docutils literal"><span class="pre">off()</span></tt>, and <tt class="docutils literal"><span class="pre">trigger()</span></tt>
+styled events to any Python class.  A quick example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">onoff</span> <span class="kn">import</span> <span class="n">OnOffMixin</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="n">OnOffMixin</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s">&quot;hello&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hello</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">print</span><span class="p">(</span><span class="s">&quot;Hello: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;hello&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">Foo</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">test</span><span class="p">(</span><span class="s">&quot;Triggered events rock!&quot;</span><span class="p">)</span>
+<span class="go">Hello: Triggered events rock!</span>
+</pre></div>
+</div>
+<dl class="class">
+<dt id="onoff.OnOffMixin">
+<em class="property">class </em><tt class="descclassname">onoff.</tt><tt class="descname">OnOffMixin</tt><a class="reference internal" href="_modules/onoff.html#OnOffMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#onoff.OnOffMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>A mixin to add <a class="reference internal" href="#onoff.OnOffMixin.on" title="onoff.OnOffMixin.on"><tt class="xref py py-func docutils literal"><span class="pre">on()</span></tt></a>, <a class="reference internal" href="#onoff.OnOffMixin.off" title="onoff.OnOffMixin.off"><tt class="xref py py-func docutils literal"><span class="pre">off()</span></tt></a>, and <a class="reference internal" href="#onoff.OnOffMixin.trigger" title="onoff.OnOffMixin.trigger"><tt class="xref py py-func docutils literal"><span class="pre">trigger()</span></tt></a> event handling
+methods to any class.</p>
+<p>For an example, let's pretend we've got a basic WebSocket server that can
+perform a number of functions based on the incoming message:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">ActionWebSocket</span><span class="p">(</span><span class="n">WebSocketHandler</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;WebSocket opened&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">message</span> <span class="o">==</span> <span class="s">&#39;hello&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hello</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">message</span> <span class="o">==</span> <span class="s">&#39;ping&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pong</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">on_close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;WebSocket closed&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">pong</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_message</span><span class="p">(</span><span class="s">&#39;pong&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_message</span><span class="p">(</span><span class="s">&#39;Hey there!&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This works OK for the most simple of stuff.  We could use string parsing of
+various sorts (startswith(), json, etc) to differentiate messages from each
+other but our conditionals will quickly grow into a giant mess.</p>
+<p>There's a better way, using the OnOffMixin:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">ActionWebSocket</span><span class="p">(</span><span class="n">WebSocketHandler</span><span class="p">,</span> <span class="n">OnOffMixin</span><span class="p">):</span>
+    <span class="s">&quot;Calls an appropriate &#39;action&#39; based on the incoming message.&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ActionWebSocket</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s">&quot;ping&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pong</span><span class="p">)</span>      <span class="c"># Register a &quot;ping&quot; event</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s">&quot;hello&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">heythere</span><span class="p">)</span> <span class="c"># Register a &quot;hello&quot; event</span>
+
+    <span class="k">def</span> <span class="nf">on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="c"># Assume we&#39;re sent a json-encoded dict:</span>
+        <span class="n">message_obj</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="c"># message_obj would be something like &#39;{&quot;eventname&quot;: &lt;args&gt;}&#39;</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">message_obj</span><span class="o">.</span><span class="n">items</span><span class="p">():</span> <span class="c"># If more than one</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">pong</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+        <span class="s">&quot;Responds to meesages like ``{&quot;</span><span class="n">ping</span><span class="s">&quot;: &lt;timestamp&gt;}``&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_message</span><span class="p">(</span><span class="s">&#39;{&quot;pong&quot;: </span><span class="si">%s</span><span class="s">}&#39;</span> <span class="o">%</span> <span class="n">timestamp</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">heythere</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;heythere() got args: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write_message</span><span class="p">(</span><span class="s">&#39;Hey there, </span><span class="si">%s</span><span class="s">!&#39;</span> <span class="o">%</span> <span class="n">arg</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the above example we used the <a class="reference internal" href="#onoff.OnOffMixin" title="onoff.OnOffMixin"><tt class="xref py py-obj docutils literal"><span class="pre">OnOffMixin</span></tt></a> to add <a class="reference internal" href="#onoff.OnOffMixin.on" title="onoff.OnOffMixin.on"><tt class="xref py py-func docutils literal"><span class="pre">on()</span></tt></a>,
+<a class="reference internal" href="#onoff.OnOffMixin.off" title="onoff.OnOffMixin.off"><tt class="xref py py-func docutils literal"><span class="pre">off()</span></tt></a>, and <a class="reference internal" href="#onoff.OnOffMixin.trigger" title="onoff.OnOffMixin.trigger"><tt class="xref py py-func docutils literal"><span class="pre">trigger()</span></tt></a> methods to our <tt class="xref py py-obj docutils literal"><span class="pre">ActionWebSocket</span></tt> class.</p>
+<dl class="method">
+<dt id="onoff.OnOffMixin.off">
+<tt class="descname">off</tt><big>(</big><em>events</em>, <em>callback</em><big>)</big><a class="reference internal" href="_modules/onoff.html#OnOffMixin.off"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#onoff.OnOffMixin.off" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes the given <em>callback</em> from the given <em>events</em> (string or list of
+strings).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="onoff.OnOffMixin.on">
+<tt class="descname">on</tt><big>(</big><em>events</em>, <em>callback</em>, <em>times=None</em><big>)</big><a class="reference internal" href="_modules/onoff.html#OnOffMixin.on"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#onoff.OnOffMixin.on" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers the given <em>callback</em> with the given <em>events</em> (string or list
+of strings) that will get called whenever the given <em>event</em> is triggered
+(using <tt class="xref py py-meth docutils literal"><span class="pre">self.trigger()</span></tt>).</p>
+<p>If <em>times</em> is given the <em>callback</em> will only be fired that many times
+before it is automatically removed from <tt class="xref py py-attr docutils literal"><span class="pre">self._on_off_events</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="onoff.OnOffMixin.once">
+<tt class="descname">once</tt><big>(</big><em>events</em>, <em>callback</em><big>)</big><a class="reference internal" href="_modules/onoff.html#OnOffMixin.once"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#onoff.OnOffMixin.once" title="Permalink to this definition">¶</a></dt>
+<dd><p>A shortcut for <tt class="xref py py-obj docutils literal"><span class="pre">self.on(events,</span> <span class="pre">callback,</span> <span class="pre">1)</span></tt></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="onoff.OnOffMixin.trigger">
+<tt class="descname">trigger</tt><big>(</big><em>events</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/onoff.html#OnOffMixin.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#onoff.OnOffMixin.trigger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fires the given <em>events</em> (string or list of strings).  All callbacks
+associated with these <em>events</em> will be called and if their respective
+objects have a <em>times</em> value set it will be used to determine when to
+remove the associated callback from the event.</p>
+<p>If given, callbacks associated with the given <em>events</em> will be called
+with <em>args</em> and <em>kwargs</em>.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Liftoff Software Corporation.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,319 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>onoff &mdash; onoff 1.0.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="onoff 1.0.1 documentation" href="../index.html"/>
+        <link rel="up" title="Module code" href="index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="../index.html" class="fa fa-home"> onoff</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <!-- Local TOC -->
+            <div class="local-toc"></div>
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">onoff</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">Module code</a> &raquo;</li>
+      
+    <li>onoff</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <h1>Source code for onoff</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python</span>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="c">#</span>
+<span class="c">#       Copyright 2014 Liftoff Software Corporation</span>
+<span class="c">#</span>
+<span class="c"># For license information see LICENSE.txt</span>
+
+<span class="c"># Meta</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s">&#39;1.0.1&#39;</span>
+<span class="n">__version_info__</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">__license__</span> <span class="o">=</span> <span class="s">&quot;Apache 2.0 (see LICENSE.txt)&quot;</span>
+<span class="n">__author__</span> <span class="o">=</span> <span class="s">&#39;Dan McDougall &lt;daniel.mcdougall@liftoffsoftware.com&gt;&#39;</span>
+
+<span class="n">__doc__</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s">onoff.py - A really handy way to add ``on()``, ``off()``, and ``trigger()``</span>
+<span class="s">styled events to any Python class.  A quick example::</span>
+
+<span class="s">    &gt;&gt;&gt; from onoff import OnOffMixin</span>
+<span class="s">    &gt;&gt;&gt; class Foo(OnOffMixin):</span>
+<span class="s">    ...     def __init__(self):</span>
+<span class="s">    ...         self.on(&quot;hello&quot;, self.hello)</span>
+<span class="s">    ...     def hello(self, *args):</span>
+<span class="s">    ...         print(&quot;Hello: </span><span class="si">%s</span><span class="s">&quot; % args)</span>
+<span class="s">    ...     def test(self, *args):</span>
+<span class="s">    ...         self.trigger(&quot;hello&quot;, *args)</span>
+<span class="s">    ...</span>
+<span class="s">    &gt;&gt;&gt; f = Foo()</span>
+<span class="s">    &gt;&gt;&gt; f.test(&quot;Triggered events rock!&quot;)</span>
+<span class="s">    Hello: Triggered events rock!</span>
+<span class="s">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="k">if</span> <span class="nb">bytes</span> <span class="o">!=</span> <span class="nb">str</span><span class="p">:</span> <span class="c"># Python 3</span>
+    <span class="nb">unicode</span> <span class="o">=</span> <span class="nb">str</span> <span class="c"># Necessary for a type check below</span>
+
+<div class="viewcode-block" id="OnOffMixin"><a class="viewcode-back" href="../index.html#onoff.OnOffMixin">[docs]</a><span class="k">class</span> <span class="nc">OnOffMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A mixin to add :func:`on`, :func:`off`, and :func:`trigger` event handling</span>
+<span class="sd">    methods to any class.</span>
+
+<span class="sd">    For an example, let&#39;s pretend we&#39;ve got a basic WebSocket server that can</span>
+<span class="sd">    perform a number of functions based on the incoming message::</span>
+
+<span class="sd">        class ActionWebSocket(WebSocketHandler):</span>
+<span class="sd">            def open(self):</span>
+<span class="sd">                print(&quot;WebSocket opened&quot;)</span>
+
+<span class="sd">            def on_message(self, message):</span>
+<span class="sd">                if message == &#39;hello&#39;:</span>
+<span class="sd">                    self.hello()</span>
+<span class="sd">                elif message == &#39;ping&#39;:</span>
+<span class="sd">                    self.pong()</span>
+
+<span class="sd">            def on_close(self):</span>
+<span class="sd">                print(&quot;WebSocket closed&quot;)</span>
+
+<span class="sd">            def pong(self, timestamp):</span>
+<span class="sd">                self.write_message(&#39;pong&#39;)</span>
+
+<span class="sd">            def hello(self):</span>
+<span class="sd">                self.write_message(&#39;Hey there!&#39;)</span>
+
+<span class="sd">    This works OK for the most simple of stuff.  We could use string parsing of</span>
+<span class="sd">    various sorts (startswith(), json, etc) to differentiate messages from each</span>
+<span class="sd">    other but our conditionals will quickly grow into a giant mess.</span>
+
+<span class="sd">    There&#39;s a better way, using the OnOffMixin:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        class ActionWebSocket(WebSocketHandler, OnOffMixin):</span>
+<span class="sd">            &quot;Calls an appropriate &#39;action&#39; based on the incoming message.&quot;</span>
+<span class="sd">            def __init__(self, *args, **kwargs):</span>
+<span class="sd">                super(ActionWebSocket, self).__init__(*args, **kwargs)</span>
+<span class="sd">                self.on(&quot;ping&quot;, self.pong)      # Register a &quot;ping&quot; event</span>
+<span class="sd">                self.on(&quot;hello&quot;, self.heythere) # Register a &quot;hello&quot; event</span>
+
+<span class="sd">            def on_message(self, message):</span>
+<span class="sd">                # Assume we&#39;re sent a json-encoded dict:</span>
+<span class="sd">                message_obj = json.loads(message)</span>
+<span class="sd">                # message_obj would be something like &#39;{&quot;eventname&quot;: &lt;args&gt;}&#39;</span>
+<span class="sd">                for key, value in message_obj.items(): # If more than one</span>
+<span class="sd">                    self.trigger(key, value)</span>
+
+<span class="sd">            def pong(self, timestamp):</span>
+<span class="sd">                &quot;Responds to meesages like ``{&quot;ping&quot;: &lt;timestamp&gt;}``&quot;</span>
+<span class="sd">                self.write_message(&#39;{&quot;pong&quot;: %s}&#39; % timestamp)</span>
+
+<span class="sd">            def heythere(self, *args):</span>
+<span class="sd">                print(&quot;heythere() got args: %s&quot; % args)</span>
+<span class="sd">                for arg in args:</span>
+<span class="sd">                    self.write_message(&#39;Hey there, %s!&#39; % arg)</span>
+
+<span class="sd">    In the above example we used the `OnOffMixin` to add :func:`on`,</span>
+<span class="sd">    :func:`off`, and :func:`trigger` methods to our `ActionWebSocket` class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="OnOffMixin.on"><a class="viewcode-back" href="../index.html#onoff.OnOffMixin.on">[docs]</a>    <span class="k">def</span> <span class="nf">on</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">times</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Registers the given *callback* with the given *events* (string or list</span>
+<span class="sd">        of strings) that will get called whenever the given *event* is triggered</span>
+<span class="sd">        (using :meth:`self.trigger`).</span>
+
+<span class="sd">        If *times* is given the *callback* will only be fired that many times</span>
+<span class="sd">        before it is automatically removed from :attr:`self._on_off_events`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Make sure our _on_off_events dict is present (if first invokation)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;_on_off_events&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_on_off_events</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">)):</span>
+            <span class="n">events</span> <span class="o">=</span> <span class="p">[</span><span class="n">events</span><span class="p">]</span>
+        <span class="n">callback_obj</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s">&#39;callback&#39;</span><span class="p">:</span> <span class="n">callback</span><span class="p">,</span>
+            <span class="s">&#39;times&#39;</span><span class="p">:</span> <span class="n">times</span><span class="p">,</span>
+            <span class="s">&#39;calls&#39;</span><span class="p">:</span> <span class="mi">0</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">event</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_off_events</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_on_off_events</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">event</span><span class="p">:</span> <span class="p">[</span><span class="n">callback_obj</span><span class="o">.</span><span class="n">copy</span><span class="p">()]})</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_on_off_events</span><span class="p">[</span><span class="n">event</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">callback_obj</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+</div>
+<div class="viewcode-block" id="OnOffMixin.off"><a class="viewcode-back" href="../index.html#onoff.OnOffMixin.off">[docs]</a>    <span class="k">def</span> <span class="nf">off</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Removes the given *callback* from the given *events* (string or list of</span>
+<span class="sd">        strings).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">)):</span>
+            <span class="n">events</span> <span class="o">=</span> <span class="p">[</span><span class="n">events</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">callback_obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_off_events</span><span class="p">[</span><span class="n">event</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">callback_obj</span><span class="p">[</span><span class="s">&#39;callback&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">callback</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_off_events</span><span class="p">[</span><span class="n">event</span><span class="p">]</span>
+                    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                        <span class="k">pass</span> <span class="c"># Nothing to do</span>
+</div>
+<div class="viewcode-block" id="OnOffMixin.once"><a class="viewcode-back" href="../index.html#onoff.OnOffMixin.once">[docs]</a>    <span class="k">def</span> <span class="nf">once</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A shortcut for `self.on(events, callback, 1)`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="OnOffMixin.trigger"><a class="viewcode-back" href="../index.html#onoff.OnOffMixin.trigger">[docs]</a>    <span class="k">def</span> <span class="nf">trigger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fires the given *events* (string or list of strings).  All callbacks</span>
+<span class="sd">        associated with these *events* will be called and if their respective</span>
+<span class="sd">        objects have a *times* value set it will be used to determine when to</span>
+<span class="sd">        remove the associated callback from the event.</span>
+
+<span class="sd">        If given, callbacks associated with the given *events* will be called</span>
+<span class="sd">        with *args* and *kwargs*.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Make sure our _on_off_events dict is present (if first invokation)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;_on_off_events&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_on_off_events</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;exc_info&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exc_info</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;OnOffMixin triggering event(s): </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">events</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">)):</span>
+            <span class="n">events</span> <span class="o">=</span> <span class="p">[</span><span class="n">events</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">event</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_off_events</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">callback_obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_off_events</span><span class="p">[</span><span class="n">event</span><span class="p">]:</span>
+                    <span class="n">callback_obj</span><span class="p">[</span><span class="s">&#39;callback&#39;</span><span class="p">](</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                    <span class="n">callback_obj</span><span class="p">[</span><span class="s">&#39;calls&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">if</span> <span class="n">callback_obj</span><span class="p">[</span><span class="s">&#39;calls&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">callback_obj</span><span class="p">[</span><span class="s">&#39;times&#39;</span><span class="p">]:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">off</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">callback_obj</span><span class="p">[</span><span class="s">&#39;callback&#39;</span><span class="p">])</span></div></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Liftoff Software Corporation.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

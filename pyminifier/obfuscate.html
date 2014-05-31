@@ -109,14 +109,14 @@
 
 <dl class="function">
 <dt id="pyminifier.obfuscate.find_obfuscatables">
-<tt class="descclassname">pyminifier.obfuscate.</tt><tt class="descname">find_obfuscatables</tt><big>(</big><em>tokens</em>, <em>obfunc</em><big>)</big><a class="reference internal" href="_modules/pyminifier/obfuscate.html#find_obfuscatables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.obfuscate.find_obfuscatables" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pyminifier.obfuscate.</tt><tt class="descname">find_obfuscatables</tt><big>(</big><em>tokens</em>, <em>obfunc</em>, <em>ignore_length=False</em><big>)</big><a class="reference internal" href="_modules/pyminifier/obfuscate.html#find_obfuscatables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.obfuscate.find_obfuscatables" title="Permalink to this definition">¶</a></dt>
 <dd><p>Iterates over <em>tokens</em>, which must be an equivalent output to what
 tokenize.generate_tokens() produces, calling <em>obfunc</em> on each with the
 following parameters:</p>
 <blockquote>
 <div><ul class="simple">
-<li><strong>tok:</strong>        The current token</li>
-<li><strong>prev_tok:</strong>   The previous token</li>
+<li><strong>tokens:</strong>     The current list of tokens.</li>
+<li><strong>index:</strong>      The current position in the list.</li>
 </ul>
 </div></blockquote>
 <p><em>obfunc</em> is expected to return the token string if that token can be safely
@@ -128,6 +128,8 @@ find_obfuscatables() how to proceed:</p>
 <li><strong>&#8216;__skipnext__&#8217;</strong>   Skip the next token in the sequence.</li>
 </ul>
 </div></blockquote>
+<p>If <em>ignore_length</em> is <tt class="docutils literal"><span class="pre">True</span></tt> then single-character obfuscatables will
+be obfuscated anyway (even though it wouldn&#8217;t save any space).</p>
 </dd></dl>
 
 <dl class="function">
@@ -140,25 +142,31 @@ preceeed the insert (can be an empty list).</p>
 
 <dl class="function">
 <dt id="pyminifier.obfuscate.obfuscatable_class">
-<tt class="descclassname">pyminifier.obfuscate.</tt><tt class="descname">obfuscatable_class</tt><big>(</big><em>tok</em>, <em>next_tok</em>, <em>prev_tok</em><big>)</big><a class="reference internal" href="_modules/pyminifier/obfuscate.html#obfuscatable_class"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.obfuscate.obfuscatable_class" title="Permalink to this definition">¶</a></dt>
-<dd><p>Given a token, returns the token string if it is a class name that can be
-safely obfuscated.</p>
+<tt class="descclassname">pyminifier.obfuscate.</tt><tt class="descname">obfuscatable_class</tt><big>(</big><em>tokens</em>, <em>index</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/pyminifier/obfuscate.html#obfuscatable_class"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.obfuscate.obfuscatable_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a list of <em>tokens</em> and an <em>index</em> (representing the current position),
+returns the token string if it is a class name that can be safely
+obfuscated.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyminifier.obfuscate.obfuscatable_function">
-<tt class="descclassname">pyminifier.obfuscate.</tt><tt class="descname">obfuscatable_function</tt><big>(</big><em>tok</em>, <em>next_tok</em>, <em>prev_tok</em><big>)</big><a class="reference internal" href="_modules/pyminifier/obfuscate.html#obfuscatable_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.obfuscate.obfuscatable_function" title="Permalink to this definition">¶</a></dt>
-<dd><p>Given a token, returns the token string if it is a function or method name
-that can be safely obfuscated.</p>
+<tt class="descclassname">pyminifier.obfuscate.</tt><tt class="descname">obfuscatable_function</tt><big>(</big><em>tokens</em>, <em>index</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/pyminifier/obfuscate.html#obfuscatable_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.obfuscate.obfuscatable_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a list of <em>tokens</em> and an <em>index</em> (representing the current position),
+returns the token string if it is a function or method name that can be
+safely obfuscated.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyminifier.obfuscate.obfuscatable_variable">
-<tt class="descclassname">pyminifier.obfuscate.</tt><tt class="descname">obfuscatable_variable</tt><big>(</big><em>tok</em>, <em>next_tok</em>, <em>prev_tok</em><big>)</big><a class="reference internal" href="_modules/pyminifier/obfuscate.html#obfuscatable_variable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.obfuscate.obfuscatable_variable" title="Permalink to this definition">¶</a></dt>
-<dd><p>Given a token, returns the token string if it is a variable name that can
-be safely obfuscated.</p>
+<tt class="descclassname">pyminifier.obfuscate.</tt><tt class="descname">obfuscatable_variable</tt><big>(</big><em>tokens</em>, <em>index</em>, <em>ignore_length=False</em><big>)</big><a class="reference internal" href="_modules/pyminifier/obfuscate.html#obfuscatable_variable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.obfuscate.obfuscatable_variable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a list of <em>tokens</em> and an <em>index</em> (representing the current position),
+returns the token string if it is a variable name that can be safely
+obfuscated.</p>
 <p>Returns &#8216;__skipline__&#8217; if the rest of the tokens on this line should be skipped.
 Returns &#8216;__skipnext__&#8217; if the next token should be skipped.</p>
+<p>If <em>ignore_length</em> is <tt class="docutils literal"><span class="pre">True</span></tt>, even variables that are already a single
+character will be obfuscated (typically only used with the <tt class="docutils literal"><span class="pre">--nonlatin</span></tt>
+option).</p>
 </dd></dl>
 
 <dl class="function">
@@ -189,14 +197,16 @@ generating a new unique name.</p>
 
 <dl class="function">
 <dt id="pyminifier.obfuscate.obfuscate_class">
-<tt class="descclassname">pyminifier.obfuscate.</tt><tt class="descname">obfuscate_class</tt><big>(</big><em>tok</em>, <em>next_tok</em>, <em>prev_tok</em>, <em>replace</em>, <em>replacement</em>, <em>*args</em><big>)</big><a class="reference internal" href="_modules/pyminifier/obfuscate.html#obfuscate_class"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.obfuscate.obfuscate_class" title="Permalink to this definition">¶</a></dt>
-<dd><p>If the token string inside <em>tok</em> matches <em>replace</em>, return <em>replacement</em>.</p>
+<tt class="descclassname">pyminifier.obfuscate.</tt><tt class="descname">obfuscate_class</tt><big>(</big><em>tokens</em>, <em>index</em>, <em>replace</em>, <em>replacement</em>, <em>*args</em><big>)</big><a class="reference internal" href="_modules/pyminifier/obfuscate.html#obfuscate_class"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.obfuscate.obfuscate_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>If the token string (a class) inside <em>tokens[index]</em> matches <em>replace</em>,
+return <em>replacement</em>.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyminifier.obfuscate.obfuscate_function">
-<tt class="descclassname">pyminifier.obfuscate.</tt><tt class="descname">obfuscate_function</tt><big>(</big><em>tok</em>, <em>next_tok</em>, <em>prev_tok</em>, <em>replace</em>, <em>replacement</em>, <em>*args</em><big>)</big><a class="reference internal" href="_modules/pyminifier/obfuscate.html#obfuscate_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.obfuscate.obfuscate_function" title="Permalink to this definition">¶</a></dt>
-<dd><p>If the token string inside <em>tok</em> matches <em>replace</em>, return <em>replacement</em>.</p>
+<tt class="descclassname">pyminifier.obfuscate.</tt><tt class="descname">obfuscate_function</tt><big>(</big><em>tokens</em>, <em>index</em>, <em>replace</em>, <em>replacement</em>, <em>*args</em><big>)</big><a class="reference internal" href="_modules/pyminifier/obfuscate.html#obfuscate_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.obfuscate.obfuscate_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>If the token string (a function) inside <em>tokens[index]</em> matches <em>replace</em>,
+return <em>replacement</em>.</p>
 </dd></dl>
 
 <dl class="function">
@@ -211,8 +221,9 @@ to be looked up there before generating a new unique name.</p>
 
 <dl class="function">
 <dt id="pyminifier.obfuscate.obfuscate_unique">
-<tt class="descclassname">pyminifier.obfuscate.</tt><tt class="descname">obfuscate_unique</tt><big>(</big><em>tok</em>, <em>next_tok</em>, <em>prev_tok</em>, <em>replace</em>, <em>replacement</em>, <em>*args</em><big>)</big><a class="reference internal" href="_modules/pyminifier/obfuscate.html#obfuscate_unique"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.obfuscate.obfuscate_unique" title="Permalink to this definition">¶</a></dt>
-<dd><p>If the token string inside <em>tok</em> matches <em>replace</em>, return <em>replacement</em>.</p>
+<tt class="descclassname">pyminifier.obfuscate.</tt><tt class="descname">obfuscate_unique</tt><big>(</big><em>tokens</em>, <em>index</em>, <em>replace</em>, <em>replacement</em>, <em>*args</em><big>)</big><a class="reference internal" href="_modules/pyminifier/obfuscate.html#obfuscate_unique"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.obfuscate.obfuscate_unique" title="Permalink to this definition">¶</a></dt>
+<dd><p>If the token string (a unique value anywhere) inside <em>tokens[index]</em>
+matches <em>replace</em>, return <em>replacement</em>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">This function is only for replacing absolutely unique ocurrences of
@@ -222,19 +233,21 @@ to be looked up there before generating a new unique name.</p>
 
 <dl class="function">
 <dt id="pyminifier.obfuscate.obfuscate_variable">
-<tt class="descclassname">pyminifier.obfuscate.</tt><tt class="descname">obfuscate_variable</tt><big>(</big><em>tok</em>, <em>next_tok</em>, <em>prev_tok</em>, <em>replace</em>, <em>replacement</em>, <em>right_of_equal</em>, <em>inside_parens</em>, <em>inside_function</em><big>)</big><a class="reference internal" href="_modules/pyminifier/obfuscate.html#obfuscate_variable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.obfuscate.obfuscate_variable" title="Permalink to this definition">¶</a></dt>
-<dd><p>If the token string inside <em>tok</em> matches <em>replace</em>, return <em>replacement</em>.
-<em>next_tok</em>, <em>prev_tok</em>, <em>right_of_equal</em>, and <em>inside_parens</em> are used to
-determine whether or not this token is safe to obfuscate.</p>
+<tt class="descclassname">pyminifier.obfuscate.</tt><tt class="descname">obfuscate_variable</tt><big>(</big><em>tokens</em>, <em>index</em>, <em>replace</em>, <em>replacement</em>, <em>right_of_equal</em>, <em>inside_parens</em>, <em>inside_function</em><big>)</big><a class="reference internal" href="_modules/pyminifier/obfuscate.html#obfuscate_variable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.obfuscate.obfuscate_variable" title="Permalink to this definition">¶</a></dt>
+<dd><p>If the token string inside <em>tokens[index]</em> matches <em>replace</em>, return
+<em>replacement</em>. <em>right_of_equal</em>, and <em>inside_parens</em> are used to determine
+whether or not this token is safe to obfuscate.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyminifier.obfuscate.obfuscation_machine">
-<tt class="descclassname">pyminifier.obfuscate.</tt><tt class="descname">obfuscation_machine</tt><big>(</big><em>use_unicode=False</em>, <em>count=1</em><big>)</big><a class="reference internal" href="_modules/pyminifier/obfuscate.html#obfuscation_machine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.obfuscate.obfuscation_machine" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pyminifier.obfuscate.</tt><tt class="descname">obfuscation_machine</tt><big>(</big><em>use_unicode=False</em>, <em>identifier_length=1</em><big>)</big><a class="reference internal" href="_modules/pyminifier/obfuscate.html#obfuscation_machine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyminifier.obfuscate.obfuscation_machine" title="Permalink to this definition">¶</a></dt>
 <dd><p>A generator that returns short sequential combinations of lower and
 upper-case letters that will never repeat.</p>
-<p>If use_unicode is True, use nonlatin cryllic, arabic, and syriac letters
-instead of the usual ABCs.</p>
+<p>If <em>use_unicode</em> is <tt class="docutils literal"><span class="pre">True</span></tt>, use nonlatin cryllic, arabic, and syriac
+letters instead of the usual ABCs.</p>
+<p>The <em>identifier_length</em> represents the length of the string to return using
+the aforementioned characters.</p>
 </dd></dl>
 
 <dl class="function">
@@ -259,9 +272,8 @@ tokenize.generate_tokens() produces, replacing the given identifier name
 <blockquote>
 <div><ul class="simple">
 <li><strong>module:</strong>       The name of the script we&#8217;re currently obfuscating.</li>
-<li><strong>tok:</strong>          The current token.</li>
-<li><strong>prev_tok:</strong>     The previous token in the sequence.</li>
-<li><strong>next_tok:</strong>     The next token in the sequence.</li>
+<li><strong>tokens:</strong>       The current list of all tokens.</li>
+<li><strong>index:</strong>        The current position.</li>
 <li><strong>replace:</strong>      The token string that we&#8217;re replacing.</li>
 <li><strong>replacement:</strong>  A randomly generated, unique value that will be used to replace, <em>replace</em>.</li>
 <li><strong>right_of_equal:</strong>   A True or False value representing whether or not the token is to the right of an equal sign.  <strong>Note:</strong> This gets reset to False if a comma or open paren are encountered.</li>

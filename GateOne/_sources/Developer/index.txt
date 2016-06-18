@@ -9,12 +9,14 @@ Gate One consists of gateone.py and several supporting Python modules and script
 
 .. toctree::
 
-    auth.rst
-    authpam.rst
-    gateone.rst
-    logviewer.rst
-    remote_syslog.rst
+    authentication.rst
+    authorization.rst
+    ctypes_pam.rst
+    pam.rst
     sso.rst
+    log.rst
+    logviewer.rst
+    server.rst
     terminal.rst
     termio.rst
     utils.rst
@@ -34,14 +36,9 @@ Gate One comes bundled with a number of plugins which can include any number of 
 
 .. toctree::
 
-    plugin_bookmarks.rst
     plugin_help.rst
-    plugin_logging.rst
-    plugin_notice.rst
-    plugin_mobile.rst
-    plugin_playback.rst
-    plugin_ssh.rst
-    plugin_example.rst
+
+.. note:: The Terminal application has its own plugins.
 
 Developing Plugins
 ------------------

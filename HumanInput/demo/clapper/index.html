@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <title>HumanInput Demo: The Clapper</title>
+        <style>
+            html, body {
+                height: 100%;
+            }
+            body {
+                background-color: white;
+                margin: 0;
+                font-family: Ubuntu, Verdana, Arial, sans-serif;
+                overflow: hidden;
+            }
+
+            a {
+                color: black;
+            }
+
+            #info {
+                position: absolute;
+                width: 100%;
+                color: black;
+                padding: 5px;
+                font-family: Monospace;
+                font-size: 13px;
+                font-weight: bold;
+                text-align: center;
+                z-index: 1;
+                top: 0;
+            }
+
+            #container {
+                margin-top: 4em;
+            }
+
+            #todo {
+                list-style:none;
+            }
+
+            .b {
+                font-weight: bold;
+            }
+
+            .b:before {
+                content: "✓";
+            }
+
+            #yay {
+                font-size: 3em;
+                text-align: center;
+            }
+
+            #yay2 {
+                font-size: 3em;
+                text-align: center;
+            }
+
+            .mono {
+                font-family: monospace;
+                margin-left: 5em;
+            }
+
+            .none {
+                display: none;
+            }
+
+        </style>
+    </head>
+    <body>
+        <script src="../../humaninput-latest.js"></script>
+
+
+        <div id="info"><b><a href="https://github.com/liftoff/HumanInput">HumanInput</a></b> - Clapper Demo<br></div>
+        <div id="container">
+        <div id="warning" class="none b">Warning:  Accessing this demo via http is unlikely to work (browsers typically only allow access to the AudioContext from sites using HTTPS).</div>
+        <div id="details">If you allowed your browser access to your microphone (and it's working) you should be able to trigger the following events by clapping:</div>
+        <ul id='todo'>
+            <li id='claponce'>Clap</li>
+            <li id='claptwice'>Clap Clap</li>
+            <li id='applause'>Applause</li>
+        </ul>
+        </div>
+        <div id="yay" class="none">Thank you, thank you!</div>
+        <br>
+        <div id="yay2" class="none">You're too kind!</div>
+        <button id="resetclaps">Reset</button>
+
+    <script>
+    if (window.location.protocol == "http:") {
+        // Localhost is typically allowed so we have to check for that too
+        if (window.location.href.indexOf('localhost') != -1 && window.location.href.indexOf('127.0.0.1') != -1) {
+            document.querySelector('#warning').classList.remove('none');
+        }
+    }
+    var settings = {logLevel: 'DEBUG', autostartClapper: true},
+        HI = new HumanInput(window, settings);
+    HI.on('clap', function() {
+        var elem = document.querySelector('#claponce');
+        HI.log.info("Recognized single clap");
+        if (!elem.classList.contains('b')) {
+            elem.classList.add('b');
+        }
+    });
+    HI.on('doubleclap', function() {
+        var elem = document.querySelector('#claptwice');
+        HI.log.info("Recognized double clap");
+        if (!elem.classList.contains('b')) {
+            elem.classList.add('b');
+        }
+    });
+    HI.on('applause', function() {
+        var elem = document.querySelector('#applause');
+        HI.log.info("Recognized applause");
+        if (!elem.classList.contains('b')) {
+            elem.classList.add('b');
+        }
+        document.querySelector('#yay').classList.remove('none');
+        HI.once('applause', function() {
+            document.querySelector('#yay2').classList.remove('none');
+        });
+    });
+    HI.on('click:#resetclaps', function(e) {
+        document.querySelector('#claponce').classList.remove('b');
+        document.querySelector('#claptwice').classList.remove('b');
+        document.querySelector('#applause').classList.remove('b');
+        document.querySelector('#yay').classList.add('none');
+        document.querySelector('#yay2').className = 'none';
+    });
+    </script>
+    </body>
+</html>

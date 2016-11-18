@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `cupi_shift` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, cupi_shift">
+
+    <title>cupi_shift - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'></p><script>window.sidebarCurrent = {name: 'cupi_shift', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>cupi_shift</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-0' class='srclink' href='../src/cupi_shift/src/lib.rs.html#1-262' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>This crate provides an interface, <code>Shifter</code> that makes it trivially easy to
+manipulate <a href="https://en.wikipedia.org/wiki/Shift_register">shift registers</a> with a Raspberry Pi (thanks to <a href="https://crates.io/crates/cupi">cupi</a>).
+Internally it keeps track of each shift register&#39;s state, allowing you to
+manipulate each pin individually as if it were a regular GPIO pin!</p>
+
+<p>Why would you want to do this?  <strong>The Raspberry Pi only has 17 usable GPIO
+pins</strong>.  Pin expanders like the <a href="https://www.adafruit.com/product/732">MCP23017</a> can add up to 16 more per chip
+(at a cost of about ~$2-3/each) but they work over I2C which is <em>slow</em> (on
+the Raspberry Pi anyway).  With shift registers like the <a href="https://www.sparkfun.com/datasheets/IC/SN74HC595.pdf">74HC595</a>
+(~$0.05-0.10/each) you can add a <em>nearly infinite</em> amount of output pins and
+<em>refresh them as fast as the hardware supports</em>.  You can even use many
+sets of 3 pins to run multiple chains of shift registers in parallel.</p>
+
+<p>Realize your dream of controlling an enormous holiday lights display with a
+single Raspberry Pi using cupi_shift!</p>
+
+<h1 id='example' class='section-header'><a href='#example'>Example</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>cupi_shift</span>;
+<span class='kw'>use</span> <span class='ident'>cupi_shift</span>::<span class='ident'>Shifter</span>;
+
+<span class='kw'>fn</span> <span class='ident'>main</span>() {
+    <span class='comment'>// First define which pins you&#39;re using for your shift register(s)</span>
+    <span class='kw'>let</span> (<span class='ident'>data_pin</span>, <span class='ident'>latch_pin</span>, <span class='ident'>clock_pin</span>) <span class='op'>=</span> (<span class='number'>29</span>, <span class='number'>28</span>, <span class='number'>27</span>);
+
+    <span class='comment'>// Now create a new Shifter instance using those pins</span>
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>shifter</span> <span class='op'>=</span> <span class='ident'>Shifter</span>::<span class='ident'>new</span>(<span class='ident'>data_pin</span>, <span class='ident'>latch_pin</span>, <span class='ident'>clock_pin</span>);
+
+    <span class='comment'>// Next we need to call `add()` for each shift register and tell it how</span>
+    <span class='comment'>// many pins they have</span>
+    <span class='kw'>let</span> <span class='ident'>pins</span> <span class='op'>=</span> <span class='number'>8</span>;
+    <span class='kw'>let</span> <span class='ident'>sr0</span> <span class='op'>=</span> <span class='ident'>shifter</span>.<span class='ident'>add</span>(<span class='ident'>pins</span>); <span class='comment'>// Starts tracking a new shift register</span>
+
+    <span class='comment'>// Now we can set the state (aka data) of our shift register</span>
+    <span class='ident'>shifter</span>.<span class='ident'>set</span>(<span class='ident'>sr0</span>, <span class='number'>0b11111111</span>, <span class='bool-val'>true</span>); <span class='comment'>// Set all pins HIGH</span>
+}
+</pre>
+
+<h1 id='note-about-pin-numbering' class='section-header'><a href='#note-about-pin-numbering'>Note about pin numbering</a></h1>
+<p><a href="https://crates.io/crates/cupi">cupi</a> currently uses GPIO pin numbering.  So pin 40 (very last pin on
+the Raspberry Pi 2) is actually pin 29.  You can refer to this image to
+figure out which pin is which:</p>
+
+<p><a href="http://pi4j.com/images/j8header-2b-large.png">http://pi4j.com/images/j8header-2b-large.png</a></p>
+
+<h1 id='controlling-individual-pins' class='section-header'><a href='#controlling-individual-pins'>Controlling individual pins</a></h1>
+<p>That&#39;s all well and good (setting the state of all pins at once) but what if
+you want to control just one pin at a time?  You can do that too:</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='comment'>// Set the 8th pin (aka pin 7) HIGH and apply this change immediately</span>
+<span class='ident'>shifter</span>.<span class='ident'>set_pin_high</span>(<span class='ident'>sr0</span>, <span class='number'>7</span>, <span class='bool-val'>true</span>); <span class='comment'>// NOTE: 3rd arg is &#39;apply&#39;</span>
+<span class='comment'>// Set the first pin (aka pin 0) LOW but don&#39;t apply just yet</span>
+<span class='ident'>shifter</span>.<span class='ident'>set_pin_low</span>(<span class='ident'>sr0</span>, <span class='number'>0</span>, <span class='bool-val'>false</span>);
+<span class='ident'>shifter</span>.<span class='ident'>apply</span>(); <span class='comment'>// Apply the change (the other way to apply changes)</span></pre>
+
+<h1 id='controlling-multiple-shift-registers' class='section-header'><a href='#controlling-multiple-shift-registers'>Controlling multiple shift registers</a></h1>
+<p>Every time you call <code>Shifter.add()</code> it will start tracking/controlling an
+additional shift register.  So if you have two shift registers chained
+together you can add and control them individually like so:</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='ident'>last</span> <span class='op'>=</span> <span class='ident'>shifter</span>.<span class='ident'>add</span>(<span class='number'>8</span>); <span class='comment'>// Add an 8-pin shift register (sr_index: 0)</span>
+<span class='kw'>let</span> <span class='ident'>first</span> <span class='op'>=</span> <span class='ident'>shifter</span>.<span class='ident'>add</span>(<span class='number'>8</span>); <span class='comment'>// Add another (sr_index: 1)</span>
+<span class='comment'>// Set pin 0 HIGH on shift register 0 (all others LOW) but don&#39;t apply the change yet</span>
+<span class='ident'>shifter</span>.<span class='ident'>set</span>(<span class='ident'>last</span>, <span class='number'>0b00000001</span>, <span class='bool-val'>false</span>);
+<span class='comment'>// Set pin 7 HIGH on shift register 1 (all others LOW) and apply the change</span>
+<span class='ident'>shifter</span>.<span class='ident'>set</span>(<span class='ident'>first</span>, <span class='number'>0b10000000</span>, <span class='bool-val'>true</span>);</pre>
+
+<p><strong>Note:</strong> Shift registers need to be added in the order in which they are
+chained with the <em>last</em> shift register being added first.  Why is the order
+reversed like this?  That&#39;s how the logic of shift registers works:  Every
+time data is &quot;shifted out&quot; to a shift register it dumps its memory to the
+the next shift register in the chain.</p>
+
+<p>You can also apply changes to individual pins on individual shift registers:</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='ident'>shifter</span>.<span class='ident'>set_pin_high</span>(<span class='ident'>sr1</span>, <span class='number'>2</span>, <span class='bool-val'>false</span>); <span class='comment'>// Set pin 2 HIGH on shift register 1</span>
+<span class='ident'>shifter</span>.<span class='ident'>set_pin_low</span>(<span class='ident'>sr0</span>, <span class='number'>3</span>, <span class='bool-val'>true</span>); <span class='comment'>// Set pin 3 LOW on shift register 0 (and apply)</span></pre>
+
+<p>In the above example we didn&#39;t set the <em>apply</em> (3rd) argument to <code>true</code>
+until the we were done making our changes.  If we set <em>apply</em> to <code>true</code> on
+each we could wind up with some flickering.  The more shift registers you
+have in your chain the more flickering you can get if you call <code>apply()</code>
+with every state (aka data) change.</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Shifter.html'
+                                  title='cupi_shift::Shifter'>Shifter</a></td>
+                           <td class='docblock-short'>
+                                
+                           </td>
+                       </tr></table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "cupi_shift";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>
